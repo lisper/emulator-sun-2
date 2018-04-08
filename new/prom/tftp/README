@@ -1,0 +1,24 @@
+This directory contains the source for the PROM implementation
+of BOOTP/TFTP.  Files include:
+
+README		this file
+doc		a short descriptive document
+boott.c		main program
+subs.c		misc subroutines
+asm.s		assembler subroutines (just a few)
+
+defs.h		misc defs
+inet.h		various internet protocol headers
+bootp.h		BOOTP protocol header
+tftp.h		TFTP protocol header
+ether.h		ether and arp headers
+
+--------------------------------
+
+Device drivers for various multibus ethernet boards
+(not all of these are converted to the multi-driver
+scheme).
+
+if_ec.c		3COM 3c400 interface
+if_il.c		Intel 82586 / Interlan NI3210 interface
+if_ex.c		Excelan interface

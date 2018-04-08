@@ -1,0 +1,1 @@
+imprint -2 -O README *.h *.c *.s | lpr

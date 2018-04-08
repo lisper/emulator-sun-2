@@ -1,0 +1,746 @@
+Only in test: ethertest
+Only in test: makefile
+Common subdirectories: lots/sunmon and test/sunmon
+Only in test: ticks.b
+Only in test: ticks.c
+Only in test: ticks.ls
+Only in test/sunmon: 3com
+Common subdirectories: lots/sunmon/CADLINC and test/sunmon/CADLINC
+Only in test/sunmon: JEP_TFTP
+Only in test/sunmon: JEP_TFTP2
+Only in lots/sunmon: SMI2
+Only in lots/sunmon: SMI8.log
+Common subdirectories: lots/sunmon/STANFORD and test/sunmon/STANFORD
+Common subdirectories: lots/sunmon/STANFORD2 and test/sunmon/STANFORD2
+Common subdirectories: lots/sunmon/STANFTI10 and test/sunmon/STANFTI10
+Common subdirectories: lots/sunmon/STANSMI10 and test/sunmon/STANSMI10
+Only in test/sunmon: STNFRD_TFTP
+Common subdirectories: lots/sunmon/conf and test/sunmon/conf
+Common subdirectories: lots/sunmon/conf2 and test/sunmon/conf2
+Common subdirectories: lots/sunmon/confreg and test/sunmon/confreg
+Common subdirectories: lots/sunmon/doc and test/sunmon/doc
+Only in test/sunmon: eftpnetboot
+Only in test/sunmon: enet10
+Only in test/sunmon: enet3
+Common subdirectories: lots/sunmon/h and test/sunmon/h
+Only in test/sunmon: help
+Common subdirectories: lots/sunmon/kernel and test/sunmon/kernel
+Only in test/sunmon: miscnetboot
+Only in lots/sunmon: netboot
+Only in lots/sunmon: prom.dl
+Common subdirectories: lots/sunmon/prom2 and test/sunmon/prom2
+Common subdirectories: lots/sunmon/screen and test/sunmon/screen
+Common subdirectories: lots/sunmon/subrs and test/sunmon/subrs
+Common subdirectories: lots/sunmon/sunconfig and test/sunmon/sunconfig
+Only in test/sunmon: tftpnetboot
+Only in lots/sunmon/CADLINC: autoboot.b
+Only in lots/sunmon/CADLINC: bedecode.b
+Only in lots/sunmon/CADLINC: boottable.b
+Only in lots/sunmon/CADLINC: busyio.b
+Only in lots/sunmon/CADLINC: cadlinc
+Only in lots/sunmon/CADLINC: cadlinc.dl
+Only in lots/sunmon/CADLINC: commands.b
+Only in lots/sunmon/CADLINC: emulate.b
+Only in lots/sunmon/CADLINC: gethexbyte.b
+Only in lots/sunmon/CADLINC: getline.b
+Only in lots/sunmon/CADLINC: getnum.b
+Only in lots/sunmon/CADLINC: givehelp.b
+Only in lots/sunmon/CADLINC: ishex.b
+diff -r lots/sunmon/CADLINC/makefile test/sunmon/CADLINC/makefile
+46c46
+< 	../dl68 -s19 -o cadlinc.dl cadlinc
+---
+> 	$(CC) -d -o cadlinc.dl cadlinc
+Only in lots/sunmon/CADLINC: makefile.bak
+Only in lots/sunmon/CADLINC: mapmem.b
+Only in lots/sunmon/CADLINC: message.b
+Only in lots/sunmon/CADLINC: printhex.b
+Only in lots/sunmon/CADLINC: proxies.b
+Only in lots/sunmon/CADLINC: queryval.b
+Only in lots/sunmon/CADLINC: sunmon.b
+Only in lots/sunmon/CADLINC: tables.b
+Only in lots/sunmon/CADLINC: transparent.b
+Only in lots/sunmon/CADLINC: version.b
+Only in lots/sunmon/STANFORD: autoboot.b
+Only in lots/sunmon/STANFORD: bedecode.b
+Only in lots/sunmon/STANFORD: boottable.b
+Only in lots/sunmon/STANFORD: busyio.b
+Only in lots/sunmon/STANFORD: commands.b
+Only in lots/sunmon/STANFORD: emulate.b
+Only in lots/sunmon/STANFORD: gethexbyte.b
+Only in lots/sunmon/STANFORD: getline.b
+Only in lots/sunmon/STANFORD: getnum.b
+Only in lots/sunmon/STANFORD: givehelp.b
+Only in lots/sunmon/STANFORD: ishex.b
+Only in lots/sunmon/STANFORD: makefile
+Only in lots/sunmon/STANFORD: makefile.bak
+Only in lots/sunmon/STANFORD: mapmem.b
+Only in lots/sunmon/STANFORD: message.b
+diff -r lots/sunmon/STANFORD/oldSTAN test/sunmon/STANFORD/oldSTAN
+46c46
+< 	../dl68 -s19 -o stanford.dl stanford
+---
+> 	$(CC) -d -o stanford.dl stanford
+Only in lots/sunmon/STANFORD: oldSTAN2
+Only in lots/sunmon/STANFORD: printhex.b
+Only in lots/sunmon/STANFORD: proxies.b
+Only in lots/sunmon/STANFORD: queryval.b
+Binary files lots/sunmon/STANFORD/stanford and test/sunmon/STANFORD/stanford differ
+Only in lots/sunmon/STANFORD: stanford.dl
+Only in test/sunmon/STANFORD: stanford.old
+Binary files lots/sunmon/STANFORD/sunmon.b and test/sunmon/STANFORD/sunmon.b differ
+Only in lots/sunmon/STANFORD: sunmon.s
+diff -r lots/sunmon/STANFORD/sym.out test/sunmon/STANFORD/sym.out
+1,12c1,11
+< UARTInitSeq 201ae8	HardReset 2000f2	mapmem 2011b0	setmode 200892
+< message 201728	UARTSpeeds 201af8	SoftReset 200416	UARTInitEnd 201af4
+< writechar 20151a	monitor 200924	main 200068	Emulate 200ef4
+< autoboot 201330	getchar 2018fe	getone 20163c	peekchar 20166e
+< openitem 2004ac	queryval 201810	transparent 200e54	bedecode 20109c
+< doload 200756	givehelp 201278	SunIdent 201b08	dobreak 2007ac
+< bootload 201494	getrecord 20055a	TakeBreak 20083a	openreg 200696
+< putchar 2018b4	getline 201598	getnum 201684	gethexbyte 20155c
+< _reg_nam 2019c8	boottype 2014ce	ishex 2016c0	printhex 201758
+< busyoutb 201882	legal 201a94	localhelp 2012a4	listboots 2013f0
+< BootTable 201cf4	NoBootProm 201de8	busyouta 201850	printoctal 2017ac
+< chardigs 201e00	lmul 201960	_etext 2019b0	_edata 201e18
+---
+> UARTInitSeq 201a40	HardReset 2000f2	mapmem 2011b8	setmode 20089a
+> message 201734	UARTSpeeds 201a50	SoftReset 20041c	UARTInitEnd 201a4c
+> writechar 201526	monitor 20092c	main 200068	Emulate 200efc
+> autoboot 20133c	getchar 2018a6	getone 201648	peekchar 20167a
+> openitem 2004b4	queryval 2017b8	transparent 200e5c	bedecode 2010a4
+> doload 20075e	givehelp 201284	SunIdent 201a60	dobreak 2007b4
+> bootload 2014a0	getrecord 200562	TakeBreak 200842	openreg 20069e
+> putchar 20185c	getline 2015a4	getnum 201690	gethexbyte 201568
+> _reg_nam 201920	boottype 2014da	ishex 2016cc	printhex 201764
+> busyoutb 20182a	legal 2019ec	localhelp 2012b0	listboots 2013fc
+> BootTable 201c4c	NoBootProm 201d40	busyouta 2017f8	chardigs 201d58
+Only in lots/sunmon/STANFORD: tables.b
+Only in lots/sunmon/STANFORD: transparent.b
+Only in lots/sunmon/STANFORD: version.b
+Only in lots/sunmon/STANFORD2: bfread.b
+Only in lots/sunmon/STANFORD2: boot.b
+Only in lots/sunmon/STANFORD2: busyio.b
+Only in lots/sunmon/STANFORD2: diskboot.h
+Only in lots/sunmon/STANFORD2: enbootload.b
+Only in lots/sunmon/STANFORD2: font.b
+Only in lots/sunmon/STANFORD2: foo.log
+Only in lots/sunmon/STANFORD2: getbootfile.b
+Only in lots/sunmon/STANFORD2: makefile
+Only in lots/sunmon/STANFORD2: makefile.bak
+Only in lots/sunmon/STANFORD2: mefrecpckt.b
+Only in lots/sunmon/STANFORD2: message.b
+Only in lots/sunmon/STANFORD2: mlkup.b
+Only in lots/sunmon/STANFORD2: mpuprt.b
+Only in lots/sunmon/STANFORD2: msetfilt.b
+Only in lots/sunmon/STANFORD2: netboot.h
+Only in lots/sunmon/STANFORD2: printhex.b
+Only in lots/sunmon/STANFORD2: probe.b
+Only in lots/sunmon/STANFORD2: prom2.b
+Only in lots/sunmon/STANFORD2: pupopn.b
+Only in lots/sunmon/STANFORD2: puprd.b
+Only in lots/sunmon/STANFORD2: pupwrt.b
+Only in lots/sunmon/STANFORD2: s2.dl
+Only in lots/sunmon/STANFORD2: screen.b
+Only in lots/sunmon/STANFORD2: screen.h
+Only in lots/sunmon/STANFORD2: setup.b
+Only in lots/sunmon/STANFORD2: stanford2
+Only in lots/sunmon/STANFORD2: stanford2.dl
+Only in lots/sunmon/STANFORD2: stanford2.sym
+Only in lots/sunmon/STANFORD2: stanford2.tmp
+Only in lots/sunmon/STANFORD2: sunscreen.b
+Only in lots/sunmon/STANFORD2: uether.b
+Only in lots/sunmon/STANFORD2: writechar.b
+Only in lots/sunmon/STANFTI10: autoboot.b
+Only in lots/sunmon/STANFTI10: bedecode.b
+Only in lots/sunmon/STANFTI10: boottable.b
+Only in lots/sunmon/STANFTI10: busyio.b
+Only in lots/sunmon/STANFTI10: commands.b
+Only in lots/sunmon/STANFTI10: emulate.b
+Only in lots/sunmon/STANFTI10: gethexbyte.b
+Only in lots/sunmon/STANFTI10: getline.b
+Only in lots/sunmon/STANFTI10: getnum.b
+Only in lots/sunmon/STANFTI10: givehelp.b
+Only in lots/sunmon/STANFTI10: ishex.b
+diff -r lots/sunmon/STANFTI10/makefile test/sunmon/STANFTI10/makefile
+46c46
+< 	../dl68 -s19 -o stanford.dl stanford
+---
+> 	$(CC) -d -o stanford.dl stanford
+48d47
+< 
+Only in lots/sunmon/STANFTI10: mapmem.b
+Only in lots/sunmon/STANFTI10: message.b
+Only in lots/sunmon/STANFTI10: printhex.b
+Only in lots/sunmon/STANFTI10: proxies.b
+Only in lots/sunmon/STANFTI10: queryval.b
+Binary files lots/sunmon/STANFTI10/stanford and test/sunmon/STANFTI10/stanford differ
+Only in lots/sunmon/STANFTI10: stanford.dl
+Only in lots/sunmon/STANFTI10: sunmon.b
+Only in lots/sunmon/STANFTI10: sunmon.s
+diff -r lots/sunmon/STANFTI10/sym.out test/sunmon/STANFTI10/sym.out
+1,12c1,11
+< UARTInitSeq 201ae8	HardReset 2000f2	mapmem 2011b0	setmode 200892
+< message 201728	UARTSpeeds 201af8	SoftReset 200416	UARTInitEnd 201af4
+< writechar 20151a	monitor 200924	main 200068	Emulate 200ef4
+< autoboot 201330	getchar 2018fe	getone 20163c	peekchar 20166e
+< openitem 2004ac	queryval 201810	transparent 200e54	bedecode 20109c
+< doload 200756	givehelp 201278	SunIdent 201b08	dobreak 2007ac
+< bootload 201494	getrecord 20055a	TakeBreak 20083a	openreg 200696
+< putchar 2018b4	getline 201598	getnum 201684	gethexbyte 20155c
+< _reg_nam 2019c8	boottype 2014ce	ishex 2016c0	printhex 201758
+< busyoutb 201882	legal 201a94	localhelp 2012a4	listboots 2013f0
+< BootTable 201cf4	NoBootProm 201de8	busyouta 201850	printoctal 2017ac
+< chardigs 201e00	lmul 201960	_etext 2019b0	_edata 201e18
+---
+> UARTInitSeq 201a1c	HardReset 2000e2	mapmem 201194	setmode 20088a
+> message 201710	UARTSpeeds 201a2c	SoftReset 20040c	UARTInitEnd 201a28
+> writechar 201502	monitor 20091c	main 200068	Emulate 200eec
+> autoboot 201318	getchar 201882	getone 201624	peekchar 201656
+> openitem 2004a4	queryval 201794	transparent 200e4c	bedecode 201080
+> doload 20074e	givehelp 201260	SunIdent 201a3c	dobreak 2007a4
+> bootload 20147c	getrecord 200552	TakeBreak 200832	openreg 20068e
+> putchar 201838	getline 201580	getnum 20166c	gethexbyte 201544
+> _reg_nam 2018fc	boottype 2014b6	ishex 2016a8	printhex 201740
+> busyoutb 201806	legal 2019c8	localhelp 20128c	listboots 2013d8
+> BootTable 201c28	NoBootProm 201d1c	busyouta 2017d4	chardigs 201d34
+Only in lots/sunmon/STANFTI10: tables.b
+Only in lots/sunmon/STANFTI10: transparent.b
+Only in lots/sunmon/STANFTI10: version.b
+Only in lots/sunmon/STANSMI10: am.dif
+Binary files lots/sunmon/STANSMI10/boottable.b and test/sunmon/STANSMI10/boottable.b differ
+Binary files lots/sunmon/STANSMI10/commands.b and test/sunmon/STANSMI10/commands.b differ
+Only in test/sunmon/STANSMI10: makefile.LOT
+Only in test/sunmon/STANSMI10: sssunmon.c
+Binary files lots/sunmon/STANSMI10/ssunmon.b and test/sunmon/STANSMI10/ssunmon.b differ
+Only in test/sunmon/STANSMI10: ssunmon.c
+Binary files lots/sunmon/STANSMI10/stanford and test/sunmon/STANSMI10/stanford differ
+diff -r lots/sunmon/STANSMI10/stanford.dl test/sunmon/STANSMI10/stanford.dl
+170c170
+< S1232520000000024EB900400000508F60102F3C00201E5C4EB90020179C588F42804E5ECB
+---
+> S1232520000000024EB900400000508F60102F3C00201E584EB90020179C588F42804E5ECF
+172c172
+< S12325600000029467142F2E00082F3C000000044EB900400000508F60102F3C00201E5CD7
+---
+> S12325600000029467142F2E00082F3C000000044EB900400000508F60102F3C00201E58DB
+180c180
+< S12326604A87671C200653864A806714538D53872F3C00201E704EB90020179C588F60E0EA
+---
+> S12326604A87671C200653864A806714538D53872F3C00201E6C4EB90020179C588F60E0EE
+192c192
+< S12327E02006028000000007E5802A004A856D262007EAA002800000000F068000201E74BB
+---
+> S12327E02006028000000007E5802A004A856D262007EAA002800000000F068000201E70BF
+196c196
+< S123286000201E7420401010488048C02F004EB900201928588F578560D64CEE00E0FFF4B5
+---
+> S123286000201E7020401010488048C02F004EB900201928588F578560D64CEE00E0FFF4B9
+198c198
+< S12328A0000C4EB9002017CC508F2F3C00201E884EB90020179C588F4EB90020160C4E5E38
+---
+> S12328A0000C4EB9002017CC508F2F3C00201E844EB90020179C588F4EB90020160C4E5E3C
+237,246c237,246
+< S1232D6465760A0000201DD80000000100201DDC0000000100201DE70000000100201DF3E1
+< S1232D840000000100201DFA0000000100201E000000000100201E0C0000000100201E1812
+< S1232DA40000000100201E210000000100201E2A0000000100201E340000000100201E3E52
+< S1232DC40000000100201E480000000100201E5200000001746970006E65742F627269646E
+< S1232DE46765006E65742F676174657761790073756E74747900566C6F616400646B2830C3
+< S1232E042C3229756E697800646228302C3229756E697800746573742F7469700073756D65
+< S1232E2465787469700073756E626F6F7431300073756E626F6F7431310073756E626F6FF3
+< S1232E447431320073756E626F6F7431330073756E626F6F743134004E6F20626F6F746CB9
+< S1232E646F61642070726F6D2E0A000008200800303132333435363738394142434445462E
+< S10B2E84000000003F200000E3
+---
+> S1232D6465760A0000201DD80000000100201DDC0000000100201DE30000000100201DEFE9
+> S1232D840000000100201DF60000000100201DFC0000000100201E080000000100201E1423
+> S1232DA40000000100201E1D0000000100201E260000000100201E300000000100201E3A62
+> S1232DC40000000100201E440000000100201E4E0000000174697000627269646765006EB2
+> S1232DE465742F676174657761790073756E74747900566C6F616400646B28302C32297501
+> S1232E046E697800646228302C3229756E697800746573742F7469700073756D65787469A7
+> S1232E24700073756E626F6F7431300073756E626F6F7431310073756E626F6F74313200D6
+> S1232E4473756E626F6F7431330073756E626F6F743134004E6F20626F6F746C6F6164203C
+> S1232E6470726F6D2E0A000008200800303132333435363738394142434445460000000082
+> S1072E843F200000E7
+Only in lots/sunmon/STANSMI10: stanford.sym
+Only in lots/sunmon/STANSMI10: stanford.tmp
+diff -r lots/sunmon/STANSMI10/sym.out test/sunmon/STANSMI10/sym.out
+11,12c11,12
+< BootTable 201d68	NoBootProm 201e5c	busyouta 2018c4	printoctal 201820
+< chardigs 201e74	lmul 2019d4	_etext 201a24	_edata 201e8c
+---
+> BootTable 201d68	NoBootProm 201e58	busyouta 2018c4	printoctal 201820
+> chardigs 201e70	lmul 2019d4	_etext 201a24	_edata 201e88
+Only in test/sunmon/conf: JEP_TFTP
+diff -r lots/sunmon/conf2/GENERIC2 test/sunmon/conf2/GENERIC2
+5a6,7
+> # Modified by Ross Finlayson to allow for TFTP booting and/or 10Mbit Ethernet
+> # drivers - 13 March 1984
+16c18,21
+< #			"pseudo-device netboot" as well.
+---
+> #			("pseudo-device eftpnetboot"
+> #			or "pseudo-device tftpnetboot")
+> #			and ("pseudo-device enet3" or "pseudo-device enet10")
+> #			as well.
+17a23,25
+> #	ENET10		(If ENETBOOT is specified) indicates a 10Mb Ethernet,
+> #			as opposed to an experimental 3Mb Ethernet.
+> #
+37,38c45,48
+< # Specify "pseudo-device netboot" iff you specify "options ENETBOOT".
+< # pseudo-device netboot
+---
+> # Specify "pseudo-device eftpnetboot" and "pseudo-device enet3"
+> # (or tftpnetboot and/or enet10 - see above) iff you specify "options ENETBOOT".
+> # pseudo-device eftpnetboot
+> # pseudo-device enet3
+Only in test/sunmon/conf2: JEP_TFTP2
+Only in test/sunmon/conf2: README
+diff -r lots/sunmon/conf2/STANFORD2 test/sunmon/conf2/STANFORD2
+27c27,28
+< pseudo-device netboot
+---
+> pseudo-device eftpnetboot
+> pseudo-device enet3
+Only in test/sunmon/conf2: STNFRD_TFTP
+Only in lots/sunmon/conf2: TEST2
+diff -r lots/sunmon/conf2/files test/sunmon/conf2/files
+7,8c7
+< subrs/probe.c			optional netboot device-driver
+< subrs/probe.c			optional diskboot device-driver
+---
+> 
+12,23c11,40
+< netboot/bfread.c		optional netboot device-driver
+< netboot/getbootfile.c		optional netboot device-driver
+< netboot/mefrecpckt.c		optional netboot device-driver
+< netboot/mlkup.c			optional netboot device-driver
+< netboot/mpuprt.c		optional netboot device-driver
+< netboot/msetfilt.c		optional netboot device-driver
+< netboot/pupopn.c		optional netboot device-driver
+< netboot/puprd.c			optional netboot device-driver
+< netboot/pupwrt.c		optional netboot device-driver
+< netboot/setup.c			optional netboot device-driver
+< netboot/uether.c		optional netboot device-driver
+< netboot/enbootload.c		optional netboot device-driver
+---
+> 
+> eftpnetboot/bfread.c		optional eftpnetboot device-driver
+> eftpnetboot/getbootfile.c	optional eftpnetboot device-driver
+> eftpnetboot/mefrecpckt.c	optional eftpnetboot device-driver
+> eftpnetboot/mlkup.c		optional eftpnetboot device-driver
+> eftpnetboot/mpuprt.c		optional eftpnetboot device-driver
+> eftpnetboot/msetfilt.c		optional eftpnetboot device-driver
+> eftpnetboot/pupopn.c		optional eftpnetboot device-driver
+> eftpnetboot/puprd.c		optional eftpnetboot device-driver
+> eftpnetboot/pupwrt.c		optional eftpnetboot device-driver
+> miscnetboot/setup.c		optional eftpnetboot device-driver
+> subrs/probe.c			optional eftpnetboot device-driver
+> 
+> tftpnetboot/arp.c		optional tftpnetboot device-driver
+> tftpnetboot/enbootload.c	optional tftpnetboot device-driver
+> tftpnetboot/enet.c		optional tftpnetboot device-driver
+> tftpnetboot/ip.c		optional tftpnetboot device-driver
+> tftpnetboot/revarp.c		optional tftpnetboot device-driver
+> tftpnetboot/tftp.c		optional tftpnetboot device-driver
+> tftpnetboot/udp.c		optional tftpnetboot device-driver
+> miscnetboot/setup.c		optional tftpnetboot device-driver
+> subrs/probe.c			optional tftpnetboot device-driver
+> subrs/ishex.c			optional tftpnetboot device-driver
+> 
+> enet3/uether.c			optional enet3 device-driver
+> subrs/probe.c			optional enet3 device-driver
+> 
+> enet10/3c400.c			optional threecom device-driver
+> enet10/excelan.c		optional excelan device-driver
+> 
+24a42,43
+> subrs/probe.c			optional diskboot device-driver
+> 
+Only in lots/sunmon/conf2: files.save
+Only in test/sunmon/conf2: oldfiles
+Only in lots/sunmon/confreg: confreg.dl
+Only in lots/sunmon/confreg: confreg.r
+diff -r lots/sunmon/confreg/makefile test/sunmon/confreg/makefile
+9,11d8
+< confreg.dl: confreg.c ../h/confreg.h ../h/sunmon.h
+< 	cc68 -d -o confreg.dl -r confreg.c
+< 
+diff -r lots/sunmon/doc/sunmon.aux test/sunmon/doc/sunmon.aux
+1,6c1,10
+< @Comment{AUXFILE of sunmon.mss by Scribe 3C(1312)-4 on 26 January 1985 at 14:06}
+< @AuxLabel{BOOTTABLE=(7;3.2.9;sunmon.mss, line 356)}
+< @AuxLabel{ENETLOADER=(14;3.6;sunmon.mss, line 802)}
+< @AuxLabel{PRM2BOOTLOAD=(11;3.3.2;sunmon.mss, line 614)}
+< @AuxLabel{PRM2BOOTTYPE=(11;3.3.2;sunmon.mss, line 623)}
+< @AuxLabel{PRM2WRITECHAR=(12;3.3.3;sunmon.mss, line 636)}
+---
+> @Comment{AUXFILE of sunmon.mss by Scribe 3C(1312)-4 on 19 January 1985 at 13:52}
+> @AuxLabel{BOOTTABLE=(8;3.2.9;sunmon.mss, line 363)}
+> @AuxLabel{EFTPENETLOADER=(16;3.6;sunmon.mss, line 812)}
+> @AuxLabel{ENET10MDRIVER=(21;3.10;sunmon.mss, line 1164)}
+> @AuxLabel{ENET3MDRIVER=(20;3.9;sunmon.mss, line 1111)}
+> @AuxLabel{PRM2BOOTLOAD=(13;3.3.2;sunmon.mss, line 624)}
+> @AuxLabel{PRM2BOOTTYPE=(13;3.3.2;sunmon.mss, line 633)}
+> @AuxLabel{PRM2ENTRY=(12;3.3.1;sunmon.mss, line 611)}
+> @AuxLabel{PRM2WRITECHAR=(13;3.3.3;sunmon.mss, line 646)}
+> @AuxLabel{TFTPENETLOADER=(19;3.7;sunmon.mss, line 1003)}
+Only in lots/sunmon/doc: sunmon.err
+diff -r lots/sunmon/doc/sunmon.mss test/sunmon/doc/sunmon.mss
+3a4
+> @modify[example, font smallbodyfont]
+8d8
+< @heading(Draft)
+15a16
+> (updated by @b[Ross Finlayson], April 1984)
+64c65,66
+< implemented are Ethernet and serial-line loaders.
+---
+> implemented are Ethernet loaders (using PUP EFTP and IP TFTP) and
+> serial-line loaders.
+74,76c76,79
+< under @t[/usr/sun/src/monitor]
+< on the Shasta Unix system.  These subdirectories are organized roughly
+< on rational grounds.  [In this section, subdirectories will be
+---
+> under @t[/usr/sun/src/sunmon]
+> on Diablo (and other Stanford Vaxes).  These subdirectories are organized
+> roughly
+> on rational grounds.  (In this section, subdirectories will be
+78c81
+< @t[/usr/sun/src/monitor/h].]
+---
+> @t[/usr/sun/src/sunmon/h].)
+220c223
+< the "auto-bootload" and "error-restart" options.
+---
+> the ``auto-bootload'' and ``error-restart'' options.
+293a297
+> @index[prom2()]
+295c299,300
+< PROM, if present.  Otherwise, something halfway intelligent is done.
+---
+> PROM, by calling the @i[prom2()] routine at the very first location in the
+> second PROM (see section @ref(PRM2ENTRY)), provided that the second PROM exists.
+298c303,304
+< bootload(fname)@\Call the @i[bootload()] routine in the second PROM
+---
+> bootload(fname)@\(Effectively) call the @i[bootload()] routine in the second
+> PROM
+306c312,313
+< If the bootload PROM exists, call the @i[boottype()] routine in the
+---
+> If the bootload PROM exists, (effectively) calls the @i[boottype()] routine in
+>  the
+317c324
+< writechar(c)@\If the second PROM exists, calls the @i[writechar()]
+---
+> writechar(c)@\If the second PROM exists, (effectively) calls the @i[writechar()]
+326c333
+< This module implements the "automatic" bootstrap facility of
+---
+> This module implements the ``automatic'' bootstrap facility of
+415c422
+< watchdog tiemr re-trigger@\The watchdog timer is reloaded; this
+---
+> watchdog timer re-trigger@\The watchdog timer is reloaded; this
+595c602
+< absolute address pointer into the address space of the second EPROM,
+---
+> absolute address pointers into the address space of the second EPROM,
+599c606
+< is that of a dispatch routine which takes a type code and calls
+---
+> is that of a dispatch routine, @i[prom2()], which takes a type code and calls
+603a611
+> @Label(PRM2ENTRY)
+609a618
+> @index(boot.c)
+612c621,622
+< section @ref(ENETLOADER)), which implement the actual loaders, are called
+---
+> sections @ref(EFTPENETLOADER) and @ref(TFTPENETLOADER)), which implement the
+> actual loaders, are called
+650c660
+< These modules implement routines that are used in both
+---
+> These modules, in @t[../subrs], implement routines that are used in both
+716,717c726,727
+< int ishex(ch)@\Returns true @i[iff] the character @t[ch] is
+< a legal hexadecimal digit.
+---
+> int ishex(ch)@\If the character @t[ch] is
+> a legal hexadecimal digit, return the corresponding numeric value, otherwise -1.
+801,807c811,814
+< @section(Ethernet bootstrap loader)
+< @Label(ENETLOADER)
+< The files in the @t[../netboot] subdirectory implement the
+< Ethernet bootstrap loader.  (The name is somewhat unfortunate, since
+< the loader is really for the ``3 mBit experimental Ethernet Pup-protocol''
+< environment; it is expected that other Ethernet loaders will soon
+< exist for IP-based protocols and for 10 mBit Ethernets.)
+---
+> @section(3Mbit Ethernet bootstrap loader)
+> @Label(EFTPENETLOADER)
+> The files in the @t[../eftpnetboot] subdirectory implement a
+> PUP-based bootstrap loader for the 3Mbit experimental Ethernet.
+849,850c856,857
+< @index(bootload.c)
+< @subsection(bootload.c)
+---
+> @index(enbootload.c)
+> @subsection(enbootload.c)
+855c862
+< called @i[bootload()].
+---
+> called @i[enbootload()].
+858,859c865,866
+< @index[bootload()]
+< bootload(bfname)@\Attempts to bootload the routine named by
+---
+> @index[enbootload()]
+> enbootload(bfname)@\Attempts to bootload the routine named by
+988a996,1091
+> @index(snb.c)
+> @subsection(snb.c)
+> This appears to be a simple test program that Jeff Mogul wrote to test the
+> above code.
+> 
+> 
+> @section(10Mbit Ethernet bootstrap loader)
+> @Label(TFTPENETLOADER)
+> The files in the @t[../tftpnetboot] subdirectory implement an
+> IP-based TFTP bootstrap loader for 10Mbit Ethernets. (It could also be
+> configured with the 3Mbit driver.) 
+> The code is well documented, and so will not be described in great detail here.
+> As with the EFTP 3Mbit bootstrap loader
+> (described in section @ref(EFTPENETLOADER)), the top-level routine is
+> @index[enbootload()]
+> @i[enbootload()], in
+> @index[enbootload.c]
+> @t[enbootload.c].
+> 
+> The TFTP implementation consists of several layers:
+> @begin[itemize]
+> @index[tftp.c]
+> @t[tftp.c]
+> contains the TFTP layer. TFTP @i[writing] is not implemented, since we
+> wish to
+> read files only.
+> 
+> TFTP is implemented on top of UDP.
+> @index[udp.c]
+> @t[udp.c]
+> contains the code for the
+> UDP layer. Routines for sending and receiving UDP packets are
+> provided. (UDP 'sends' are used for TFTP read requests, and acknowledgements.)
+> To save code space, we do not compute a checksum on UDP packets.
+> 
+> UDP is implemented on to of IP.
+> @index[ip.c]
+> @t[ip.c]
+> contains the code for the
+> IP layer, and provides routines for sending and receiving IP
+> packets. To save code space, the IP read routine assumes that incoming IPs
+> have not been fragmented.
+> 
+> The IP layer makes use of the Ethernet routines in
+> @index[enet.c]
+> @t[enet.c]. These in turn call the routines that make up the (10Mbit or 3Mbit)
+> Ethernet
+> driver.
+> @end[itemize]
+> 
+> In addition to TFTP (and completely independent of it), both ``Address
+> Resolution'' (ARP)
+> @index[ARP]
+>  and ``Reverse Address Resolution'' (RARP)
+> @index[RARP]
+>  are used.
+> ARP is implemented in
+> @index[arp.c]
+> @t[arp.c]. It is used to find the Ethernet address to which to send the initial
+> TFTP read request. In principle this is not necessary, since the request could
+> be sent as an Ethernet broadcast packet. In practice, however, the sending of
+> an ARP request packet is useful, since it ensures that the mapping from the 
+> workstation's internet address to its Ethernet address is stored in the
+> receiving
+> host's ARP table. If  this did not happen, then when the receiving host then
+> tried to send the first (UDP) data packet, it would be forced to @i[itself]
+>  send  out an ARP request, which the workstation would not handle. (Note
+> that the ARP
+> code in @t[arp.c] only sends out a request packet, and interprets the reply;
+> it does not listen to anyone else's ARP requests.)
+> 
+> 'Reverse' ARP, or RARP,  is used to find the workstation's internet address,
+> given its 
+> Ethernet
+> address (which, of course, is known to the workstation).
+> (This is done prior to sending
+> the ARP request mentioned above.) This code is implemented in
+> @index[revarp.c]
+> @t[revarp.c].
+> Alternatively, the user can enter the
+> workstation's internet address as part of the boot command typed at the
+> console, in which case RARP is not used.
+> At the time of writing, RARP has not been accepted as a standard outside of
+> Stanford, although we hope that this will happen eventually.
+> 
+> Associated with each of the @t[@i(x).c] files mentioned  above, there is a
+> corresponding
+> header file @t[@i(x).h].
+> 
+> 
+> @section(Miscellaneous routines for bootloading)
+> The @t[../miscnetboot] subdirectory contains routines that are common
+> to both the
+> EFTP loader and the TFTP loader.
+> 
+> 
+993c1096
+< memory by @i[getbootfile()], and converts it into a runnable
+---
+> memory by @i[enbootload()], and converts it into a runnable
+1006a1110,1118
+> @section[3Mbit Ethernet driver]
+> @label[ENET3MDRIVER]
+> The @t[../enet3] subdirectory contains a simple driver for our 3Mbit Ethernet
+> boards. The EFTP bootloader uses this driver. The TFTP bootloader could also be
+> configured to use this driver, to boot off a 3MBit Ethernet. In practice,
+> however,
+> it uses the 10Mbit Ethernet driver described in section @ref[ENET10MDRIVER], to
+> boot off a 10MB Ethernet.
+> 
+1009,1014c1121,1123
+< This is a ``micro'' implementation of an ethernet driver (hence
+< the @i[u]ether], which uses busy-wait I/O to avoid confronting
+< all sorts of difficult issues.  The routines whose names beginning
+< with @i[en] are seen by external modules; the other routines
+< deal directly with the interface hardware.
+< @begin(description)
+---
+> This is a ``micro'' implementation of a 3Mbit ethernet driver (hence
+> the @i[u]ether), which uses busy-wait I/O to avoid confronting
+> all sorts of difficult issues.@begin(description)
+1019a1129,1133
+> @index[enetaddress()]
+> enetaddress(enetAddr)@\Another version of the above routine, which returns the
+> local
+> Ethernet address in the reference parameter @t[enetAddr].
+> 
+1026c1140
+< to reject unwanted packets.  If nothing happens comes
+---
+> to reject unwanted packets.  If nothing happens
+1039c1153
+< mc68kenread(buffer,timeout)@\Reads a packet into @t[buffer],
+---
+> mc68kenread(buffer,timeout,maxShorts)@\Reads a packet into @t[buffer],
+1041c1155
+< @t[timeout] seconds.
+---
+> @t[timeout] seconds. At most @t[maxShorts] 16-bit words are read.
+1047a1162,1190
+> 
+> @section[10Mbit Ethernet driver]
+> @label[ENET10MDRIVER]
+> The @t[../enet10] subdirectory contains a driver for the Excelan EXOS/101
+> 10Mbit Ethernet
+> board. The TFTP bootloader has been configured to use this driver. This 
+> subdirectory contains a single source code file, @t[excelan.c], and two 
+> header files,
+> @index[excelan.h]
+> @t[excelan.h], and
+> @index[constants.h]
+> @t[constants.h].
+> 
+> @index(excelan.c)
+> @subsection(excelan.c)
+> This is a ``bare bones'' ethernet driver for the Excelan board. Nevertheless,
+> because of the complexity of the Excelan board, it is still quite substantial.
+> The exported routines are
+> @index[enetaddress()]
+> @index[enopen()]
+> @index[mc68kenread()]
+> @index[mc68kenwrite()]
+> @i[enetaddress()],
+> @i[enopen()],
+> @i[mc68kenread()] and
+> @i[mc68kenwrite()]. These are equivalent to the corresponding routines in the
+> 3Mbit driver (see section @ref[ENET3MDRIVER]).
+> 
+> 
+1065c1208
+< "rolls" instead of scrolling (like an MIT ITS terminal.)
+---
+> ``rolls'' instead of scrolling (like an MIT ITS terminal.)
+1263,1264d1405
+< # The "cpu", "ident", and "options" lines can be the same as
+< #	in the basic configuration file
+1272c1413,1416
+< #			"pseudo-device netboot" as well
+---
+> #			("pseudo-device eftpnetboot"
+> #			or "pseudo-device tftpnetboot")
+> #			and ("pseudo-device enet3" or "pseudo-device enet10")
+> #			as well.
+1273a1418,1424
+> #	ENET10		(If ENETBOOT is specified) indicates a 10Mb Ethernet,
+> #			as opposed to an experimental 3Mb Ethernet.
+> #
+> #	DISKBOOT	Allow local disk bootstrap loader.  If this
+> #			option is given, you must specify
+> #			"pseudo-device diskboot" as well.
+> #
+1280c1431
+< #	    MAXBOOTTRIES, ENETBOOT
+---
+> #	    MAXBOOTTRIES, ENETBOOT, DISKBOOT
+1285d1435
+< # This line names the output file.
+1288d1437
+< # This indicates that the Frame Buffer support code should be included.
+1291,1292c1440,1446
+< # Specify "pseudo-device netboot" iff you specify "options ENETBOOT".
+< # pseudo-device netboot
+---
+> # Specify "pseudo-device eftpnetboot" and "pseudo-device enet3"
+> # (or tftpnetboot and/or enet10 - see above) iff you specify "options ENETBOOT".
+> # pseudo-device eftpnetboot
+> # pseudo-device enet3
+> #
+> # Specify "pseudo-device diskboot" iff you specify "options DISKBOOT".
+> # pseudo-device diskboot
+1402c1556
+< file @t[../TEST/netmon.dl] (and possibly @t[../TEST2/netmontwo.dl].)
+---
+> file @t[../TEST/netmon.dl] (and possibly @t[../TEST2/netmontwo.dl]).
+1404,1405c1558,1565
+< into pairs of EPROMs.  For information on how to do this,
+< see the manual for the @i[prom] program.
+---
+> into pairs of EPROMs.
+> 
+> NOTE: The Data I/O PROM programmer in ERL recognizes S19 ``@t[.dl]''
+> format (16-bit addresses), rather than the default format (S28 - 24-bit
+> addresses) generated by @t[dl68]. If you wish to use this PROM programmer, then
+> you will need to change
+> your
+> makefile to run @t[dl68] with the ``@t[-s19]'' flag.
+Only in lots/sunmon/doc: sunmon.otl
+Binary files lots/sunmon/doc/sunmon.press and test/sunmon/doc/sunmon.press differ
+Only in lots/sunmon/h: confreg.h.v1
+diff -r lots/sunmon/kernel/boottable.c test/sunmon/kernel/boottable.c
+39c39
+< 	/* 2  */	"net/bridge",	1,
+---
+> 	/* 2  */	"bridge",	1,
+Only in lots/sunmon/kernel: foo
+Only in lots/sunmon/kernel: refresh.c
+Only in lots/sunmon/kernel: sunmon.c.v1
+Only in lots/sunmon/screen: screen.b
+Only in lots/sunmon/sunconfig: config.l.v1
+Only in lots/sunmon/sunconfig: lex.yy.c
+Only in lots/sunmon/sunconfig: y.tab.c

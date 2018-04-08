@@ -1,0 +1,1 @@
+bmgrep $* kernel/* h/* eftp/* tftp/* prom2/* screen/* subrs/*

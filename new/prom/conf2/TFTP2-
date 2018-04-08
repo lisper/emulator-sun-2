@@ -1,0 +1,17 @@
+#	TFTP boot PROM 
+
+cpu		"SUNV1PCREVD"
+ident		TFTP
+
+options		TFTPBOOT, ENETBOOT
+
+config	dummy tftp
+
+pseudo-device screen
+pseudo-device tftpnetboot
+pseudo-device threecom
+pseudo-device interlan
+#pseudo-device excelan
+
+pseudo-device eftpnetboot
+pseudo-device enet3

@@ -1,0 +1,26 @@
+Thu Feb  7 16:27:56 1985
+  created file asmdef.h[gregorio], author: rsf on Fri Jul 20 12:38:07 1984
+Thu Feb  7 16:27:59 1985
+  created file autoboot.h[gregorio], author: rsf on Fri Jul 20 12:38:07 1984
+Thu Feb  7 16:28:02 1985
+  created file buserr.h[gregorio], author: rsf on Fri Jul 20 12:38:08 1984
+Thu Feb  7 16:28:08 1985
+  created file confreg.h[gregorio], author: rsf on Fri Jul 20 12:38:08 1984
+Thu Feb  7 16:28:13 1985
+  created file globram.h[gregorio], author: rsf on Fri Jul 20 12:38:08 1984
+Thu Feb  7 16:28:18 1985
+  created file m68vectors.h[gregorio], author: rsf on Fri Jul 20 12:38:09 1984
+Thu Feb  7 16:28:21 1985
+  created file prom2.h[gregorio], author: rsf on Fri Jul 20 12:38:09 1984
+Thu Feb  7 16:28:25 1985
+  created file screen.h[gregorio], author: rsf on Fri Jul 20 12:38:09 1984
+Thu Feb  7 16:28:34 1985
+  created file sunbug.h[gregorio], author: rsf on Fri Jul 20 12:38:09 1984
+Thu Feb  7 16:28:38 1985
+  created file sunemt.h[gregorio], author: rsf on Fri Jul 20 12:38:10 1984
+Thu Feb  7 16:28:43 1985
+  created file sunmon.h[gregorio], author: rsf on Fri Jul 20 12:38:10 1984
+Thu Feb  7 16:28:47 1985
+  created file suntimer.h[gregorio], author: rsf on Fri Jul 20 12:38:10 1984
+Thu Feb  7 16:28:52 1985
+  created file sunuart.h[gregorio], author: rsf on Fri Jul 20 12:38:11 1984

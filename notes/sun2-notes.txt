@@ -1,0 +1,169 @@
+68010
+extra:  FC=3
+
+fc
+0 undefined
+1 user data
+2 user program
+3 access to mmu
+4 undefined
+5 supervisor data
+6 supervisor program
+7 interrrupt ack
+
+0x008 id prom
+0x00a diagnostic register
+0x00c bus error register
+0x00e system enable register
+
+---
+id pr0m
+ 0 0x0008
+ 1 0x0808
+ 2 0x1008
+ ...
+31 0xf808
+
+1 format	1		-> 1
+2 machine type	1
+3 ethernet addr 6
+4 date		4
+5 serial #	3
+6 checksum	1
+7 reserved	16
+---
+diagnostic reg
+8 bits
+
+---
+bus error register
+d0 parerrl
+d1 parerru
+d2 timeout
+d3 proterr
+d4
+d5
+d6
+d7 pagevalid   1-> valid, 0-> invalid
+---
+system enable register
+
+
+---
+
+MMU
+page size	2048 bytes
+segment size	32768 bytes
+proces size	16mb
+# of contexts	8
+# of segments/context	512
+# of pages/segment	16
+# of pmegs		256
+# of pages total	4096
+# of segments total	4096
+
+VA
+23-15	9	segment #
+14-11	4	page #
+10-1	10	word #
+0	1	byte #
+
+CONTEXT
+0x0303
+
+
+Segment map
+8 bit pmeg #
+
+index = address[31:22] - 9 most bits + context[2:0]
+segmap[index] -> pmeg number
+
+
+Page map
+
+4k x 32bit entries
+
+31	1	1
+30-25	6	protection rwxrwx
+24-22	3	memory type
+20	1	a
+19	1	n
+0-18	20	page #
+
+memory type
+0 p2 mem - dram, fb, uart
+1 i/o 
+2 p1 bus memory
+3 p1 bus i/o
+
+Access to mmu - fc=3
+
+map    	  address
+page map	  0 + V		V & 0xfff800 
+segment map	  4 + V		V & 0xff8000
+context map	  6 + V		V & 0x000000
+
+---
+
+MAP
+0 - 0x07fffe	ram
+
+
+---
+video 1152x900
+
+0 - 0x1fffe
+bit 15 is first pixel, upper left
+
+addr 0x00000000: tme/host/posix/memory ram 4MB
+addr 0x00700000 ipl 4: bw frame buffer
+addr 0x00780000 ipl 6: uart
+addr 0x00781800 video control
+addr 0x00ef0000: tme/host/posix/memory rom sun2-multi-rev-R.bin
+addr 0x00ef8000
+
+addr 0x00002000 ipl 6: tme/machine/sun2/zs
+addr 0x00002800 tme/machine/sun2/clock
+addr 0x00003800 tme/machine/sun2/tod
+
+i/o
+
+0x000000 eprom
+0x000800 
+0x001000 
+0x001800 
+0x002000 serial		zilog 8530a
+0x002800 timer		amd 9513, 4.9mhz clock
+0x003000 raster op
+0x003800 rtc 		national 58167, 32 registers
+
+
+interrupts
+
+7 timer1
+6 serial port
+5 timers2..5
+4 video
+3
+2
+1
+
+mbio0 at mainbus0 mbio: tme/generic/bus size 8MB
+mbmem0 addr 0x00000 at mainbus0 mbmem: tme/generic/bus size 8MB
+sc0 at mbmem0 addr 0x80000 ipl 2: tme/bus/multibus/sun-sc
+
+
+
+
+------
+
+mbmem bus error, physical 0x00088000, virtual 0x00f88000
+mbmem bus error, physical 0x000e0000, virtual 0x00fe0000
+
+mbio bus error, physical 0x0000ee40, virtual 0x00ebee40
+mbio bus error, physical 0x0000ee48, virtual 0x00ebee48
+mbio bus error, physical 0x00000040, virtual 0x00eb0040
+mbio bus error, physical 0x00000044, virtual 0x00eb0044
+mbio bus error, physical 0x00000048, virtual 0x00eb0048
+mbio bus error, physical 0x0000004c, virtual 0x00eb004c
+

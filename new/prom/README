@@ -1,0 +1,5 @@
+This directory hierarchy contains the sources and object code for
+the Sun PROM monitor.  Documentation is in the ../doc subdirectory.
+
+I strongly recommend that people NOT change the source code.
+-Jeff Mogul

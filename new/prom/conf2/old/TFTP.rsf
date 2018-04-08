@@ -1,0 +1,11 @@
+#	TFTP boot PROM for Cadlincs & similar SUNs
+cpu		"SUNV1PCREVD"
+ident		STNFRD_TFTP
+
+options		ENETBOOT, ENET10
+
+config	dummy stnfrd_tftp
+
+pseudo-device screen
+pseudo-device tftpnetboot
+pseudo-device enet10

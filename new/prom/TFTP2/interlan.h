@@ -1,0 +1,1 @@
+#define NINTERLAN 1

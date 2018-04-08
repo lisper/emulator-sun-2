@@ -1,0 +1,32 @@
+Thu Feb  7 16:47:43 1985
+  created file basefont.c[gregorio], author: rsf on Fri Jul 20 12:39:01 1984
+Thu Feb  7 16:47:56 1985
+  created file clearscreen.c[gregorio], author: rsf on Fri Jul 20 12:39:01 1984
+Thu Feb  7 16:48:06 1985
+  created file cmr.c[gregorio], author: rsf on Fri Jul 20 12:39:00 1984
+Thu Feb  7 16:48:15 1985
+  created file cmrb.c[gregorio], author: rsf on Fri Jul 20 12:39:00 1984
+Thu Feb  7 16:48:24 1985
+  created file cmrw.c[gregorio], author: rsf on Fri Jul 20 12:38:59 1984
+Thu Feb  7 16:48:30 1985
+  created file cmrx.c[gregorio], author: rsf on Fri Jul 20 12:38:59 1984
+Thu Feb  7 16:48:37 1985
+  created file convert[gregorio], author: rsf on Fri Jul 20 12:38:58 1984
+Thu Feb  7 16:48:42 1985
+  created file convert.c[gregorio], author: rsf on Fri Jul 20 12:38:58 1984
+Thu Feb  7 16:48:49 1985
+  created file font.c[gregorio], author: rsf on Fri Jul 20 12:38:57 1984
+Thu Feb  7 16:48:52 1985
+  created file main.c[gregorio], author: rsf on Fri Jul 20 12:38:57 1984
+Thu Feb  7 16:48:56 1985
+  created file makefile[gregorio], author: rsf on Fri Jul 20 12:38:57 1984
+Thu Feb  7 16:49:03 1985
+  created file screen.c[gregorio], author: rsf on Fri Jul 20 12:38:56 1984
+Thu Feb  7 16:49:07 1985
+  created file sunmain.c[gregorio], author: rsf on Fri Jul 20 12:38:56 1984
+Thu Feb  7 16:49:13 1985
+  created file sunscreen.c[gregorio], author: rsf on Fri Jul 20 12:38:56 1984
+Thu Feb  7 16:49:17 1985
+  created file tcap[gregorio], author: rsf on Fri Jul 20 12:38:55 1984
+Thu Feb  7 16:49:20 1985
+  created file vaxscreen.c[gregorio], author: rsf on Fri Jul 20 12:38:55 1984

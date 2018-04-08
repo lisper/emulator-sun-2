@@ -1,0 +1,11 @@
+ed - makefile <<EOT
+1,\$s/@echo/echo/g
+1,\$s/@rm/rm/
+1,\$s/400000/1000/
+1,\$s/-s -o/-X -o/
+1,\$s/-lpup -lc/-lpup -lddt -lc -x/
+1,\$s/@size/size/
+w
+q
+EOT
+echo done!

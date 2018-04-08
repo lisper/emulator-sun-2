@@ -1,0 +1,24 @@
+Thu Feb  7 16:29:56 1985
+  created file autoboot.c[gregorio], author: rsf on Fri Jul 20 12:38:46 1984
+Thu Feb  7 16:29:59 1985
+  created file bedecode.c[gregorio], author: rsf on Fri Jul 20 12:38:45 1984
+Thu Feb  7 16:30:04 1985
+  created file boottable.c[gregorio], author: rsf on Fri Jul 20 12:38:45 1984
+Thu Feb  7 16:30:14 1985
+  created file commands.c[gregorio], author: rsf on Fri Jul 20 12:38:44 1984
+Thu Feb  7 16:30:17 1985
+  created file emulate.c[gregorio], author: rsf on Fri Jul 20 12:38:44 1984
+Thu Feb  7 16:30:20 1985
+  created file givehelp.c[gregorio], author: rsf on Fri Jul 20 12:38:48 1984
+Thu Feb  7 16:30:24 1985
+  created file mapmem.c[gregorio], author: rsf on Fri Jul 20 12:38:48 1984
+Thu Feb  7 16:30:27 1985
+  created file proxies.c[gregorio], author: rsf on Fri Jul 20 12:38:44 1984
+Thu Feb  7 16:30:32 1985
+  created file sunmon.c[gregorio], author: rsf on Fri Jul 20 12:38:47 1984
+Thu Feb  7 16:30:36 1985
+  created file tables.c[gregorio], author: rsf on Fri Jul 20 12:38:47 1984
+Thu Feb  7 16:30:40 1985
+  created file transparent.c[gregorio], author: rsf on Fri Jul 20 12:38:47 1984
+Thu Feb  7 16:30:44 1985
+  created file version.c[gregorio], author: rsf on Fri Jul 20 12:38:46 1984

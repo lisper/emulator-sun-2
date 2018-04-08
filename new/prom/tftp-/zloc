@@ -1,0 +1,76 @@
+(Message inbox:580)
+Return-Path: <LOUGHEED@SU-SIERRA.ARPA>
+Received: from SU-SIERRA.ARPA by su-safe.arpa with Sendmail; Fri, 7 Feb 86 14:24:33 pst
+Date: Fri 7 Feb 86 14:19:47-PST
+From: Kirk Lougheed <Lougheed@SU-SIERRA.ARPA>
+Subject: Re: "standard" ether board locations
+To: croft@SU-SAFE.ARPA
+Cc: spurgeon@SU-CSLI.ARPA, yeager@SUMEX-AIM.ARPA
+In-Reply-To: Message from "Bill Croft <croft@su-safe.arpa>" of Fri 7 Feb 86 11:48:53-PST
+
+Enclosed is the device location documentation from the (SUMEX derived) EECF
+Ethertip/Gateway.  Note that the SUN 3MB and 3COM 10MB interfaces are in the
+same places that Bill Yeager originally assigned them.  Notice as well that
+I moved the Interlan interface from its original assignment in the Seagate
+software.
+
+Kirk
+			------------
+/*
+ *		Magic Numbers!   All are in hexadecimal.
+ *
+ * Memory space layout as set up by ROM monitor.
+ *
+ * 	     0 - 100000		onboard RAM - 1 megabyte
+ *	100000 - 1F0000		Multibus memory space
+ *	1F0000 - 200000		Multibus I/O space
+ *
+ * Current Multibus memory space assignment by supported devices.
+ *
+ *  memory card		100000	      40000	(256. Kbytes)
+ *
+ *	STP 	0	140000		100
+ *	 	1	140100
+ *	 	2	140200
+ *	 	3	140300
+ *	 	4	140400
+ *	 	5	140500
+ *
+ *   Interlan	0	142000	       2000
+ *		1	144000
+ *		2	146000
+ *		3	148000
+ *
+ *   memory card	149000		A7000	(668. Kbytes)   *** NYI ***
+ *
+ * Current Multibus I/O space assignment by supported devices.
+ *
+ *	PCI	0	1F0000		 20
+ *		1	1F0020
+ *		2	1F0040
+ *		3	1F0060
+ *		4	1F0080
+ *		5	1F00A0
+ *
+ *	MLP	0	1F00C0		20
+ *		1	1F00E0
+ *
+ *	SUN	0	1F0100		100
+ *		1	1F0200
+ *		2	1F0300
+ *		3	1F0400
+ *
+ *   Interlan	0	1F0500		  10
+ *		1	1F0510
+ *		2	1F0520
+ *		3	1F0530
+ *
+ *	1F0540 - 1F1FFF unused -- 0x15C0 bytes
+ *
+ *	3COM	0	1F2000		2000
+ *		1	1F4000
+ *		2	1F6000
+ *		3	1F8000
+ */
+-------
+

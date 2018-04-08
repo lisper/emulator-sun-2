@@ -1,0 +1,162 @@
+
+scsi signals
+
+DB[7:0]
+
+BSY	bus is being used
+RST	RESET condition
+
+ATN	drive by initiator; ATTENTION condition
+ACK	drive by initiator; acknowledge REQ
+SEL	drive by initiator; select target
+
+MSG	drive by target; MESSAGE phase
+C/D	drive by target; control/data; true = control
+REQ	drive by target; request ACK during information transfer
+I/O	drive by target; input/output; true = input to initiator
+
+
+Bus phase
+
+|              |      |      | C/D, |      |         |
+|              |      |      | I/O, |      |         |
+|              |      |      | MSG, | ACK, | DB(7-0) |
+|              | BSY  | SEL  | REQ  | ATN  |  DB(P)  |
+|--------------+------+------+------+------+---------+
+|  BUS FREE    | None | None | None | None |   None  |
+|  ARBITRATION | All  | Win  | None | None |   S ID  |
+|  SELECTION   | I&T  | Init | None | Init |   Init  |
+|  RESELECTION | I&T  | Targ | Targ | Init |   Targ  |
+|  COMMAND     | Targ | None | Targ | Init |   Init  |
+|  DATA IN     | Targ | None | Targ | Init |   Targ  |
+|  DATA OUT    | Targ | None | Targ | Init |   Init  |
+|  STATUS      | Targ | None | Targ | Init |   Targ  |
+|  MESSAGE IN  | Targ | None | Targ | Init |   Targ  |
+|  MESSAGE OUT | Targ | None | Targ | Init |   Init  |
+
+
+Bus Phases
+
+a) BUS FREE phase
+b) ARBITRATION phase
+c) SELECTION phase
+d) RESELECTION phase
+e) COMMAND phase
+f) DATA phase
+g) STATUS phase
+h) MESSAGE phase
+
+
+BUS FREE
+--------
+a) after a reset condition is detected;
+b) after an ABORT message is successfully received by a target;
+c) after a BUS DEVICE RESET message is successfully received by a target;
+d) after a DISCONNECT message is successfully transmitted from a target (see 6.6.6);
+e) after a COMMAND COMPLETE message is successfully transmitted from a target (see 6.6.5);
+f) after a RELEASE RECOVERY message is successfully received by a target;
+g) after an ABORT TAG message is successfully received by a target;
+h) after a CLEAR QUEUE message is successfully received by a target.
+
+BSY & SEL are false
+
+ARBITRATION
+-----------
+
+device or's in it's id on the data bus
+
+SELECTION
+---------
+
+target asserts BSY & SEL
+initiator asserts ATN
+initiator deasserts BSY
+
+RESELECTION
+-----------
+
+COMMAND
+DATA
+STATUS
+MESSAGE
+-------
+
+DATA OUT	MSG=f CD=f IO=f  (initiator -> target)
+DATA IN 	MSG=f CD=f IO=t
+COMMAND		MSG=f CD=t IO=f
+STATUS		MSG=f CD=t IO=t
+
+MESSAGE OUT	MSG=t CD=t IO=f  (initiator -> target)
+MESSAGE IN	MSG=t CD=t IO=t
+
+information transfer
+--------------------
+
+target -> initiator
+
+ target drive data bus
+ target asserts REQ
+ initiator asserts ACK
+ target deasserts REQ
+ initiator deasserts ACK
+
+initiator -> target
+
+ target asserts REQ
+ initiator drive data bus
+ initiator asserts ACK
+ target deasserts REQ
+ initiator deasserts ACK
+
+
+Atention condition
+
+initiator asserts ATN during BUS FREE
+target does a MESSAGE OUT
+
+
+State Machine
+-------------
+
+                 +-----------------+
+                 |                 |
+                 |                 v
+                 |            MESSAGE OUT
+                 |              ^  |
+                 |              |  v
+   +--------- SELECTION       COMMAND
+   |             ^                 |
+   v             |                 v
+BUS FREE  ->  ARBITRATION     DATA IN/OUT
+   ^             |                 |
+   |             v                 v
+   +--------- RESELECTION     STATUS
+   ^             |               ^  |
+   |             |               |  v
+   |             |            MESSAGE IN
+   |             |               ^  |
+   |             |               |  |
+   |             +---------------+  |
+   |                                |
+   +--------------------------------+
+
+
+Transitions
+-----------
+
+BUS FREE				ARBITRATION
+ARBITRATION				SELECTION
+					RESELECTION
+SELECTION		BUS FREE			MESSAGE OUT
+RESELECTION		BUS FREE							MESSAGE IN
+
+MESSAGE OUT								COMMAND
+									DATA IN/OUT	MESSAGE IN	STATUS
+COMMAND							MESSAGE OUT			MESSAGE IN	STATUS
+DATA IN/OUT						MESSAGE OUT			MESSAGE IN	STATUS
+STATUS							MESSAGE OUT			MESSAGE IN
+MESSAGE IN		BUS FREE			MESSAGE OUT	COMMAND
+									DATA IN/OUT
+
+http://www.staff.uni-mainz.de/tacke/scsi/SCSI2-06.html
+

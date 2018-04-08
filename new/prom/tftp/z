@@ -1,0 +1,9 @@
+cc68 -I. -c -O -DTFTP -DSUNV1PCREVD -DENETBOOT -DTFTPBOOT -DMC68000  -I/usr/sun/include/pup/ ../tftp/boott.c
+cc68 -I. -c -O -DTFTP -DSUNV1PCREVD -DENETBOOT -DTFTPBOOT -DMC68000  -I/usr/sun/include/pup/ ../tftp/subs.c
+echo loading tftp
+loading tftp
+rm -f tftp
+size tftp
+text	data	bss	dec	hex
+21620	4464	116	26200	6658
+cc68 -d -o tftp.dl tftp

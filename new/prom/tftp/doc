@@ -1,0 +1,296 @@
+USING THE BOOTP PROMS AND SERVER
+
+This short document gives an overview of the operation and usage of the new
+bootp proms.  If you are interested in how the protocol itself works, please
+see RFC951, Bootstrap Protocol, available via FTP from 
+[sri-nic]<rfc>rfc951.txt.
+
+
+
+PROM COMMANDS RELATED TO BOOTING
+
+The prom monitor has these commands at the 'top level' ('>' prompt)
+related to boot loading.  (This is unchanged from the old proms):
+
+	n	Net load (boot) and go
+	f	net load (boot) File and stop before executing
+	w	show Which devices/files are available for booting
+
+The usual syntax was just 'n filename', which would load the filename and
+start execution.
+
+
+
+SWITCHES AND SYNTAX WITHIN THE 'N' COMMAND
+
+For the new bootstrap, some extensions have been made within the existing
+command structure to allow additional features.  The 'filename' argument
+can have the following form:
+
+	filename		normal filename
+	<null>			boot the file chosen by the server host
+	host:filename		boot filename from a specific server host
+	host:			boot the default filename from server host
+	?			prompt for parameters
+
+While the 'host:' forms are currently accepted and placed as specified in the
+bootp packet, at present the bootp server daemon does not process the host
+name field.  (It could do a hostname lookup and forward the request there).
+
+The '?' argument will cause the prom code to prompt for various arguments
+that are normally determined automatically.  This can be useful when booting
+from a particular internet address/gateway combination.  Arguments prompted
+for include:
+
+	Server address/name [broadcast]
+	Gateway address [server]
+	My own address [set by BOOTP server]
+	File name [set by BOOTP server]
+	RAM memory address at which to load [0x1000]
+
+The arguments also have default values (shown in []'s) which are assumed
+if not specified.  If the user specifies enough information (server address,
+my address, and file name), then the prom bypasses the BOOTP phase entirely
+and directly enters the TFTP phase.  This can be useful for manually booting
+from arbitrary internet hosts not running BOOTP servers.
+
+Normally however, the '?' feature is not used and instead the bootp protocol
+itself determines the parameters.
+
+When invoked by the 'n filename' or 'f filename' commands, the filename can
+also be prefixed by the following (UNIX-style) switches:
+
+	-i	show available 10MB interfaces
+	-iX	select a particular interface (e.g. -i2)
+	-p	use PUP booting on 3MB interface (not BOOTP)
+	-h	"help me I'm not registered"
+
+The -i switch is used to print out the six byte ethernet addresses of
+any attached interfaces.  The prom code currently contains drivers for
+the 3COM 3C400 interface (at 4 possible multibus board addresses) and the
+Interlan NI3210 (also at 4 addresses).  The -i printout lists both the
+multibus address and the ethernet address (if plugged in).  Using this
+information you can configure your boards and the bootp database file
+discussed below.
+
+Normally the interfaces are scanned in a circular order, starting with
+the first.  If a boot can't be obtained after a certain timeout (about
+one minute), the next interface is tried in succession.  The -iX switch
+can allow you to override the starting point of the scan to use any of
+the available interfaces.
+
+At Stanford we still have some PUP 3 megabit gear and so to maintain 
+backward compatibility, the -p switch will force the boot to occur from 
+that interface, if present.  Normally only the 10MB interfaces are scanned.
+
+The -h switch is currently implemented in the prom, but not in the bootp
+server.  It would allow users who arent registered in any bootp database
+to still boot by obtaining a 'temporary' IP address, just for the duration
+of the boot phase.  As I said this hasnt been implemented in the server yet
+but would probably be done by having a small group of IP addresses per given
+cable, say xx.yy.zz.250 through xx.yy.zz.254, assignable for this purpose
+on a temporary basis.
+
+
+
+BOOTP FILES
+
+The bootp server lives in /etc/bootp.  It is normally started by 
+/etc/rc.local.  /etc/bootp reads /etc/bootptab when it starts up, this
+contains the configuration table, here is a sample:
+
+	#
+	# /etc/bootptab:  database for bootp server (/etc/bootp)
+	#
+	# last update 2/2/86 by croft
+	#
+	# Blank lines and lines beginning with '#' are ignored.
+	#
+	# home directory
+	
+	/usr/sun/bootfile
+	
+	# default bootfile
+	
+	sunmonhelp
+	
+	# end of first section
+	
+	%%
+	
+	#
+	# The remainder of this file contains one line per client interface
+	# with the information shown by the table headings below.
+	# The 'host' name is also tried as a suffix for the 'bootfile'
+	# when searching the home directory.  (e.g., bootfile.host)
+	#
+	# host		htype haddr		iaddr		bootfile
+	#
+	
+	tc101g		1 02:60:8c:06:35:05	36.44.0.65	ecw
+	tc101gi		1 02:07:01:00:30:02	36.44.0.65	seagate
+	sun-tb113a	1 02:60:8c:00:77:78     36.44.0.03      sumextip
+	nick		1 02:60:8c:00:99:47	36.44.0.01	ecw
+
+You should start with a file similar to this and edit the host entries
+to correspond to your local systems.  The host field does not have to
+be a formal host name, it is used for identification in the log file
+and also as a possible extension to the bootfile name.
+
+The 'htype' is always '1' and corresponds to the hardware type assigned
+ethernet by the Assigned Numbers RFC.  The 'haddr' field can use periods
+or colons as separators.  The 'bootfile' entry is the file used if the
+client does a default boot ('n') with no filename specified.  This is
+frequently the case when a powerup occurs (see CONFIGURATION JUMPERS
+section below).
+
+/etc/bootptab is read once at startup and then re-read whenever the write
+date/time changes on the file.  This allows the database to be updated
+without sending any special signals to the daemon.  Be careful however that
+your text editor re-writes the file in place, rather than linking it to
+a backup name upon exit.  In the latter case the daemon still has the
+original file open and the date hasnt changed, but the file names have
+changed out from under the daemon.
+
+The daemon also keeps a log file, currently in /usr/adm/bootplog.  This
+may be changed to use the system logging mechanism instead;  in that case
+the messages would go to /usr/spool/mqueue/syslog intermixed with all the
+other syslog messages from other processes.  Here is an example log:
+
+	#
+	#    BOOTP server starting at Wed Mar  5 10:50:08 1986
+	#
+	(re)reading /etc/bootptab
+	request from tc101g for 'ecw'
+	replyfile /usr/sun/bootfile/ecw
+	(re)reading /etc/bootptab
+	request from nick for 'edp'
+	replyfile /usr/sun/bootfile/edp
+	request from tc101g for 'welchtipa'
+	replyfile /usr/sun/bootfile/welchtipa
+	request from tc101g for 'zt'
+	replyfile /usr/sun/bootfile/zt
+	request from tc101g for 'edp'
+	replyfile /usr/sun/bootfile/edp
+
+
+
+PROM INSTALLATION
+
+The BOOTP software and device drivers are contained in proms U102 and U104,
+which are 2764 EPROMs, a total of 16K bytes.  This also includes the
+PUP booting code and 3MB device driver.  The old Sun-1 terminal emulator
+(for the Sun-1 display buffer and monitor) was omitted from this prom
+version to make enough room for the 2 protocols and 3 device drivers
+included in this configuration.  When the PUP code is eventually deleted
+that will make enough room for a couple more 10 MB drivers.
+
+The U101 and U103 proms, which contain the keyboard command executive and
+powerup code are unaffected by the new booting software.  This is good
+because 101/103 also contain CPU specific constants like the CPU and UART
+clock rates.  When these are changed you have to have a custom set based
+on your CPU type (Sun, Forward, Cadlink, etc.) and clock (8 MHz, 10 MHz,...)
+
+
+
+CONFIGURATION JUMPERS
+
+On the SUN processor board, edge connector J2 pins 4 through 7 are used
+to select one of 14 different programs to boot.  The number to name table
+is stored in the first prom set (U101/103) and so it remains constant, 
+even though we would have liked to revise it with the new BOOTP software in
+U102 and 104.  Here is the table built into most existing prom sets:
+
+	/* 1  */	"tip",		1,
+	/* 2  */	"bridge",	1,
+	/* 3  */	"gateway",	1,
+	/* 4  */	"suntty",	1,
+	/* 5  */	"Vload", 	1,
+	/* 6  */	"dk(0,2)unix",	1,
+	/* 7  */	"db(0,2)unix",	1,
+	/* 8  */	"testtip",	1,
+	/* 9  */	"sumextip", 	1,
+	/* 10 */	"sunboot10",	1,
+	/* 11 */	"sunboot11",	1,
+	/* 12 */	"sunboot12",	1,
+	/* 13 */	"sunboot13",	1,
+	/* 14 */	"sunboot14",	1
+
+The actual table can be printed by the monitor "w ff" command.  When no
+jumpers are installed the value is 15, which means "self test and enter
+keyboard monitor".  If all four jumpers are installed the meaning is the
+same, but the self test is skipped.
+
+In the old days, these bootfile names were important since they selected
+the file to be autobooted on powerup.  With the new BOOTP proms, the
+bootfile name can instead be determined by the configuration file
+(/etc/bootptab).  Thus the jumpers can still be used, but are less
+important.
+
+To select a load file based on the configuration database, one would like
+to use one of the table entries with a null string "", since this is
+the proper 'n' argument to indicate this.  However you can see from the
+U101/103 table above, there is no null jumper option available.  INSTEAD,
+you can use jumper setting #14 (one jumper at pin 4), corresponding to file
+"sunboot14".  When the BOOTP server sees this special case, it treats it
+the same as if the null filename "" was specified.  Thus the server
+searches its database to find the proper boot file for this particular
+client machine.
+
+
+
+PROM CALLABLE TFTP
+
+The BOOTP/TFTP bootstrap uses a global structure (bglob) located at the
+end of memory during its operation.  This structure is left intact after
+the booted program gets control.  In some cases a program (such as an
+ethertip) may want to fetch a configuration file listing its addresses and
+options before starting up.  With the mechanism provided by this bglob
+structure, that program can call the prom resident TFTP code to fetch the
+desired config file.  Bglob provides variables and strings to hold the
+appropriate TFTP data.  Most of these values, except for the actual file
+name, would still be valid for such an intended purpose.  Here is the
+beginning of bglob so you can get the idea.
+
+	/*
+	 * Bootstrap globals live at the end of memory, and can be referenced
+	 * through system global 'bglobptr' (defined below), which
+	 * points to this structure.
+	 */
+	struct bglob {
+		/*
+		 * the first few fields would be good candidates 
+		 * to copy in from EAPROM.
+		 */
+		iaddr_t	myiaddr;	/* my internet address */
+		iaddr_t	gateiaddr;	/* gateway ip addr */
+		iaddr_t	serveiaddr;	/* server ip addr */
+		eaddr_t	myeaddr;	/* my ethernet address */
+		int	loadat;		/* load address */
+		struct	ifconfig *ifptr;/* current interface */
+		u_char	file[64];	/* file name to boot */
+		u_char	sname[64];	/* server name */
+					/* end EAPROM area */
+		/*
+		 * next fields allow a program just loaded to re-call PROM
+		 * bootp or tftp, e.g. to load an ethertip configuration file.
+		 */
+		struct ifconfig *ifconfigp; /* points to PROM ifconfig */
+		int	(*bootp)();	/* bootp entry point */
+		int	(*tftpread)();	/* tftp read entry point */
+		int	(*tftpwrite)();	/* tftp write (dump) entry */
+
+		...
+
+	#define	bglobptr	((struct bglob *) (GlobPtr->MemorySize - 2048))
+
+
+
+GATEWAY MODIFICATIONS
+
+Another documentation file in this directory, "gmods", explains with a 
+pseudo code example, how to make your campus gateways forward BOOTP
+requests properly so that the servers can respond to cross-gateway boot
+requests.  These modifications have already been installed and are operating
+in the Yeager and Lougheed gateways here at Stanford.
+

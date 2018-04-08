@@ -1,0 +1,30 @@
+#
+# STANFORD configuration file for Sun PROM Monitor
+#	Low PROMS
+#
+# Jeffrey Mogul		30 March 1982
+#
+#
+cpu		"SUNV1PCREVD"
+ident		FTI10
+#
+# Possible compile-time options are:
+#
+#	ABORTSWITCH	Abort switch is connected to SYNCA' on UART.
+#	BOOTHELP	Attempt to load help program by bootstrapping.
+#	BREAKKEY	<Break> on UART A causes abort.
+#	BREAKTRAP	Breakpoint trap command available.
+#	EMULATE		Emulator traps available.
+#	FRAMEBUF	Frame buffer supported as console output device.
+#	WATCHDOG	Watchdog timer enabled.
+#
+#	The following options take arguments:
+#
+#	AUTOBOOTNAME=<filename>		e.g., AUTOBOOTNAME=memtest
+#			This is used to override the autoboot table;
+#			if the configuration register specifies autoboot,
+#			use <filename> regardless.
+#
+options		BREAKKEY, BREAKTRAP, EMULATE, FRAMEBUF, BOOTHELP, FTI10
+
+config	dummy fti10

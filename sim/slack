@@ -1,0 +1,171 @@
+/* Memory-mapped IO ports */
+
+/* 6850 serial port like thing
+   Implements a reduced set of functionallity.
+ */
+#define MC6850_STAT  0xff1000L     // command/status register
+#define MC6850_DATA  0xff1002L     // receive/transmit data register
+
+/* Memory mapped disk system */
+
+#define DISKC_FILENAME "diskc.cpm.fs"
+#define DISK_BASE       0xff0000L
+#define DISK_SET_DMA   (DISK_BASE)
+#define DISK_SET_DRIVE (DISK_BASE+4)
+#define DISK_SET_SECTOR (DISK_BASE+8)
+#define DISK_READ      (DISK_BASE+12)
+#define DISK_WRITE     (DISK_BASE+16)
+#define DISK_STATUS    (DISK_BASE+20)
+#define DISK_FLUSH     (DISK_BASE+24)
+
+#define RAMDISK                   // create a simulated 16MB RAM disk on M:
+#define RAM_DRIVE   ('M'-'A')
+#define RAMDISK_SIZE  0x1000000
+
+#define CPM_IMAGE  "cpm400.bin"
+#define BIOS_IMAGE "simbios.bin"
+
+/* Miscilaneous */
+
+#define S_TIME          (0xff7ff8)  // read long to get time in seconds
+#define CPM_EXIT        (0xff7ffc)
+
+/* Implementation for the MC6850 like device
+
+   Only those bits of the control register that enable/disable receive and
+   transmit interrupts are implemented.
+
+   In the status register, the Receive Data Register Full, Transmit Data
+   Register Empty, and IRQ flags are implemented. Although the transmit
+   data register is always empty.
+ */
+
+void MC6850_reset(void)
+{
+  g_MC6850_control = 0;
+  g_MC6850_status = 2;
+  int_controller_clear(IRQ_MC6850);
+}
+
+void input_device_update(void)
+{
+  if(kbhit())
+    {
+      g_MC6850_status |= 1;
+      if((g_MC6850_control & 0x80) && !(g_MC6850_status & 0x80))
+	{
+	  int_controller_set(IRQ_MC6850);
+	  g_MC6850_status |= 0x80;
+	}
+    }
+}
+
+int input_device_ack(void)
+{
+  return M68K_INT_ACK_AUTOVECTOR;
+}
+
+unsigned int MC6850_data_read(void)
+{
+  char ch;
+
+  int_controller_clear(IRQ_MC6850);
+  g_MC6850_status &= ~0x81;          // clear data ready and interrupt flag
+
+  if(read(STDIN_FILENO, &ch, 1) == 1)
+    return ch;
+
+  else 
+    return -1;
+}
+
+int MC6850_status_read()
+{
+  return g_MC6850_status;
+}
+
+
+/* Implementation for the output device */
+
+void output_device_update(void)
+{
+  
+}
+
+int MC6850_device_ack(void)
+{
+  return M68K_INT_ACK_AUTOVECTOR;
+}
+
+void MC6850_data_write(unsigned int value)
+{
+  char ch;
+  int ret;
+
+  ch = value;
+  ret = write(STDOUT_FILENO, &ch, 1);
+  //  putc(value, stdout);
+
+  if((g_MC6850_control & 0x60) == 0x20)   // transmit interupt enabled?
+    {
+      int_controller_clear(IRQ_MC6850);
+      int_controller_set(IRQ_MC6850);
+    }
+}
+
+void MC6850_control_write(unsigned int val)
+{
+  g_MC6850_control = val;
+}
+
+/*
+  Load binary files including cpm400.bin produced from the s-records
+  in cpm400.sr.
+ */
+void load_srecords(void)
+{
+  int i, fd;
+
+
+  if((fd = open(CPM_IMAGE, O_RDONLY)) == -1)
+    exit_error("Unable to open %s", CPM_IMAGE);
+
+  if((i = read(fd, g_ram, MAX_RAM+1)) == -1)
+    exit_error("Error reading %s", CPM_IMAGE);
+
+  fprintf(stderr, "Read %d bytes of CP/M-68K BDOS image.\n", i);
+
+  close(fd);
+
+  if((fd = open(BIOS_IMAGE, O_RDONLY)) == -1)
+    exit_error("Unable to open %s", BIOS_IMAGE);
+
+  if(read(fd, g_ram, 8) == -1)         // read initial SP and PC
+    exit_error("Error reading %s", BIOS_IMAGE);
+
+  lseek(fd, 0x6000, SEEK_SET);         // skip to BIOS at 0x6000
+
+  if((i = read(fd, &g_ram[0x6000], sizeof(g_ram)-0x6000/*MAX_RAM+1*/)) == -1)
+    exit_error("Error reading %s", BIOS_IMAGE);
+
+  fprintf(stderr, "Read %d bytes of CP/M-68K BIOS image.\n", i);
+}
+
+void load_boot_track(void)
+{
+  int i;
+
+  if(g_disk_fds[2] == 0)
+    {
+      fprintf(stderr, "No boot drive available!\n");
+      exit(1);
+    }
+  lseek(g_disk_fds[2], 0, SEEK_SET);
+  i =read(g_disk_fds[2], &g_ram[0x400], 32*1024);
+  fprintf(stderr, "Read %d bytes from boot track\n", i);
+
+
+  // Now put in values for the stack and PC vectors
+  WRITE_LONG(g_ram, 0, 0xfe0000);   // SP
+  WRITE_LONG(g_ram, 4, 0x400);      // PC
+}

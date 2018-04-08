@@ -1,0 +1,13 @@
+UARTInitSeq 201b5c	HardReset 20010a	mapmem 201224	setmode 200906
+message 20179c	UARTSpeeds 201b6c	SoftReset 200488	UARTInitEnd 201b68
+writechar 20158e	monitor 200998	main 200068	Emulate 200f68
+autoboot 2013a4	getchar 201972	getone 2016b0	peekchar 2016e2
+openitem 200520	queryval 201884	transparent 200ec8	bedecode 201110
+doload 2007ca	givehelp 2012ec	SunIdent 201b7c	dobreak 200820
+bootload 201508	getrecord 2005ce	TakeBreak 2008ae	openreg 20070a
+putchar 201928	getline 20160c	getnum 2016f8	gethexbyte 2015d0
+_reg_nam 201a3c	boottype 201542	ishex 201734	printhex 2017cc
+busyoutb 2018f6	legal 201b08	localhelp 201318	listboots 201464
+BootTable 201d68	NoBootProm 201e58	busyouta 2018c4	printoctal 201820
+chardigs 201e70	lmul 2019d4	_etext 201a24	_edata 201e88
+_end 201e88	

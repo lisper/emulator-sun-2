@@ -1,0 +1,166 @@
+<HTML><HEAD><TITLE>port-hp300: hp300 series HW (brain dump)</TITLE></HEAD>
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000">
+<B>Subject:</B> hp300 series HW (brain dump)<BR>
+<B>To:</B> None <i>&lt;port-hp300&#64;NetBSD.ORG&gt;</i><BR>
+<B>From:</B> Mike Hibler <i>&lt;mike&#64;cs.utah.edu&gt;</i><BR>
+<B>List:</B> port-hp300<BR>
+<B>Date:</B> 12/15/1994 22:16:29
+<PRE>Here is the bulk of a message I sent out to CSRG back when they first got
+some 300s in 1990.  Might be useful for people.  Maybe someone can update
+it with the later machines...
+----
+Here is the HP9000 series as I know it (as of April 1990 that is):
+
+1. Buses:
+
+DIO-I:	16-bit wide, 16Mb (24-bit) address space bus which supports the bulk
+	of HP's controllers: HP-IB adaptor, SCSI host adaptor, serial
+	interfaces and some older graphics interfaces.
+
+DIO-II:	32-bit wide, 4Gb (32-bit) address space bus which mostly supports
+	graphics interfaces and the Human Interface Board (HIB, aka &quot;IO card&quot;)
+	which consists of LAN, fast HP-IB (or SCSI), DMA, RS232, HIL, and
+	internal HP-IB.
+
+HP-IB:	HP's implementation of IEEE 488.1.  Supports a variety of HP
+	peripherals including disks, tapes, printers and plotters.  Each
+	HP-IB can have up to 8 slaves.  Comes in two flavors:
+
+	1. Slow or standard speed (aka the &quot;internal&quot; HPIB):
+	   300KB/sec (DMA) and 50KB/sec (non-DMA) max.  For
+	   low-bandwidth peripherals like instrument controllers
+	   and printers/plotters.  There is one of these (the internal
+	   HP-IB) on every model machine I know of plus there is
+	   a DIO-I card version.
+
+	2. Fast or high speed:
+	   1.2MB/sec (DMA) and 50KB/sec (non-DMA) max.  For high
+	   speed devices like disks and tapes.  Comes as either
+	   a DIO-II &quot;daughter&quot; board or a DIO-I plug-in card.
+
+	A single system can have one &quot;internal&quot;, one daughter board
+	and any number of DIO-I style HP-IB interfaces.
+
+SCSI:	Single-ended sync/async SCSI-I (I think) implementation.
+	Each SCSI bus can have up to 8 &quot;slaves&quot;, 1 of which (slave 7)
+	is the controller (host-adaptor) itself.  Again, there are
+	two variations:
+
+	1. DIO-II &quot;daughter&quot; board:
+	   1.5MB/sec (async) and 4.0MB/sec (sync) max.  Max of
+	   one such interface per machine since it is a bolt-on
+	   board that connects directly to the HIB.
+
+	2. DIO-I plug-in card:
+	   1.5MB/sec (async) and 2.67MB/sec (sync) max.  Can have
+	   more than one of these depending on how many DIO slots
+	   there are.
+
+VME:	VME C.1 implementation.
+	Don't know much about this, even though we have a couple.  Haven't
+	done any support for the interface, not even sure it needs any.
+	I think Van can tell you more about the limitations of this.
+	There is an expander box version with 4 VME C.1 slots or there is
+	a DIO card plus VME C.1 interface card for connecting to an
+	external card-cage.  HP only has one VME card product, an SNA
+	interface.
+
+HIL:	Human Interface Link.  This is the &quot;bus&quot; that the graphical input
+	devices	(e.g. keyboard, mouse, knobs, tablet, buttons) sit on.
+	One HIL &quot;loop&quot; can hold up to 7 devices.  We only support one
+	HIL.
+
+2. Machines (in rough order of introduction):
+
+310:	Obsolete.  10Mhz 68010 CPU based machine, don't know what MMU.
+	We have never supported these in BSD.  About 0.7 of a VAX 780 based
+	on dhrystone 1.1.
+
+320:	Obsolete.  16Mhz 68020 CPU + 16Mhz 68881 FPU + HP proprietary MMU +
+	16k VAC.  Holds 1-8Mb of RAM.  Has DIO-I bus, which memory and
+	all interfaces sit on.  Can add additional slots via DIO &quot;expander&quot;
+	box.  We support these because we have lots of them.  ~1.5 x VAX 780.
+
+350:	Obsolete.  25Mhz 68020 + 20Mhz 68881 + HP MMU + 32k VAC.
+	Holds 8-48Mb of RAM.  Has DIO-II bus supporting HIB and graphics
+	interface.  Additional DIO-I and DIO-II slots available via expander
+	boxes.  Has private CPU/memory bus.  Software identical to 320
+	except supports 32-bit DMA transfers (320 only does 8 and 16).
+	Supported cuz we have em.  ~3.4 x VAX 780.
+
+330:	Obsolete.  16Mhz 68020 + 16Mhz 68881 + ??Mhz 68851 Motorola MMU.
+	Has 4Mb of RAM on CPU board.  Has DIO-II bus with two available
+	slots (which can be converted to DIO slots), cannot add expander
+	boxes.  Support was added long ago because U. Wisc had them and
+	loaned us one.  ~1.5 x VAX 780.
+
+318
+319:	Obsolete.  16Mhz 68020 + 16Mhz 68881 + ??Mhz 68851 Motorola MMU.
+	Low-cost, single-board version of 330.  318 is monochrome, 319
+	is 6-bit color.  Non-expandable (or upgradable) in any way.  I
+	think we borrowed a 318 once to make sure it worked (which it
+	did since it is software-identical to 330).  ~1.5 x VAX 780.
+
+370:	33Mhz 68030 (includes MMU) + 33Mhz 68882 FPU + 64k PAC.
+	Single, CPU board upgrade of the 350, same memory.  These are our
+	workhorse machines (e.g. jaguar) right now.  ~5.7 x VAX 780.
+
+360:	25Mhz 68030 + 25Mhz 68882.
+	The 68030 equivalent of the 330; i.e. semi-expandable.  Holds
+	4-16Mb of RAM which is tightly coupled to the CPU (i.e. not the
+	same RAM as in the 350/370).  Supported, we have one of them.
+	Software-identical to 370 except no cache.  ~3.9 x VAX 780.
+
+340:	16Mhz 68030 + 16Mhz 68882.
+	Low-cost, single-board version of 360 (though with different memory).
+	4-16Mb of RAM.  Has one extra DIO-II slot.  Intended primarily as
+	a diskless workstation.  Supported, we have a few of these.
+	Software-identical to 360.  ~2.8 x VAX 780.
+
+332:	16Mhz 68030 + optional 16Mhz 68882.
+	Upgrade to 310, don't know much about it.  Not sold in a workstation
+	configuration.  1-8Mb of RAM on private bus.  Has DIO-I slots and
+	accepts DIO-I expander box.  Not supported, we have never seen one.
+	Wouldn't immediately work since we assume an FPU.  Should be about
+	2.8 x VAX 780.
+
+375:	50Mhz 68030 + 50Mhz 68882 + 32k PAC.
+	Multi-board upgrade of 370.  8-32Mb of RAM (different than 370)
+	in 8Mb increments.  Multi-board SPU includes CPU, memory, SCSI,
+	DMA, LAN, RS232, HIL, slow HP-IB and Centronics parallel interfaces.
+	Has two available DIO-II slots (convertable to DIO-I slots) and
+	can accept expander boxes.  CPU/FPU sit on a socketed &quot;mezzanine&quot;
+	board that can be replaced by a 68040 chip later this year.  We
+	will have several of these, support has just been added.
+	~7.8 x VAX 780.
+
+345:	50Mhz 68030 + 50Mhz 68882 + 32k PAC.
+	Non-expandable version of 375.  Well, almost.  It only goes
+	from 4-16Mb of RAM in 4Mb increments (the 4Mb boards can be
+	used in 375s, but the 8Mb boards cannot be used in the 345s?)
+	Not upgradable to 68040.  ~7.8 x VAX 780.
+
+380(?):	25Mhz 68040 (includes FPU and MMU) + 32k PAC.
+	Guessing here, don't know what it will be called or whether it
+	will have a cache.  375 Upgrade is supposed to be available at
+	no more than $2000 but is not yet on the price list.  Would hope
+	that they will introduce higher capacity memory boards, 32mb
+	(4 x 8mb modules) is not very much for their high-end 68k box.
+	Of course, only Donald Trump could afford to buy more than a
+	Mb or two anyway...
+
+3. Kernel config &quot;cpu&quot; types (ifdefs):
+
+310 and 332 are not supported.
+
+HP320:	Includes HP MMU, old 16-bit only DMA, VAC support.
+HP330:	Motorola 68851 MMU support.
+HP350:	Always together with 320 except with newer 32-bit DMA support.
+HP360:	Together with 330 for MMU support (68030 MMU is subset of 68851),
+	also some kludgy support for DIO-II graphics display.
+HP370:	Always together with 360 except for additional PAC support.
+
+HP330 should be defined for 318/319 support.
+HP370 should be defined for 345/375 support.
+</PRE>
+</BODY></HTML>
