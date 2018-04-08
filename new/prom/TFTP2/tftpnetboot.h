@@ -1,1 +1,0 @@
-#define NTFTPNETBOOT 1

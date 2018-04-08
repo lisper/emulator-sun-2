@@ -1,5 +1,0 @@
-# /etc/termcap entry for:
-# Sun ROM-resident emulator
-sr|sunrom|SunRom|Sun Rom:\
-	am:ns:pt:bs:co#80:li#24:ce=10\EK:up=\EA:cl=120\f:nd=\EC:\
-	nl=\ED:cm=\EY%+ %+ :

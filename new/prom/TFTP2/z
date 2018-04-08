@@ -1,7 +1,0 @@
-echo loading tftp
-loading tftp
-rm -f tftp
-size tftp
-text	data	bss	dec	hex
-22968	3236	116	26320	66d0
-cc68 -d -o tftp.dl tftp

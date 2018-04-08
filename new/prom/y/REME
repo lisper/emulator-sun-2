@@ -1,6 +1,0 @@
-versions from Jim Powell:
-
-src	findlayson
-lots	benji
-test	merge (src + lots) + 3com
-	but minus some changes by Phil Almquist
