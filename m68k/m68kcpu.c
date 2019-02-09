@@ -815,6 +815,7 @@ void m68k_set_buserr(uint pc)
 	{
 		extern int quiet;
 		if (!quiet) {
+			void m68ki_dump_state(void);
 			printf("m68k_set_buserr\n");
 			m68ki_dump_state();
 		}

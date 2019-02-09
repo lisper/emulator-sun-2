@@ -41,6 +41,7 @@ int am9513_device_ack(int which)
     int_controller_clear(IRQ_9513_TIMER2);
     return M68K_INT_ACK_AUTOVECTOR;
   }
+  return -1;
 }
 
 void am9513_update(void)

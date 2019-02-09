@@ -3,7 +3,7 @@
  *
  * 10/2014  Brad Parker <brad@heeltoe.com>
  *
- * Copyright (C) 2017-2018 Brad Parker <brad@heeltoe.com>
+ * Copyright (C) 2014-2019 Brad Parker <brad@heeltoe.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -27,6 +27,9 @@
 #include <string.h>
 #include <getopt.h>
 #include <dirent.h>
+#include <ctype.h>
+
+#include "scsi.h"
 
 extern void sim68k(void);
 
@@ -102,6 +105,7 @@ read_binary(int fd, int addr)
 {
 	extern unsigned char g_rom[];
 	eprom_size = read(fd, g_rom/*eprom_raw*/, sizeof(eprom_raw));
+	return eprom_size;
 }
 
 int
@@ -230,6 +234,7 @@ char *tape_arg;
 char *boot_arg;
 char *kernel_arg;
 
+int
 main(int argc, char **argv)
 {
   int c;

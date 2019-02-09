@@ -7483,7 +7483,7 @@ void m68k_op_tas_8_al(void)
 
 void m68k_op_trap(void)
 {
-	xxx();
+	//xxx();
 	/* Trap#n stacks exception frame type 0 */
 	m68ki_exception_trapN(EXCEPTION_TRAP_BASE + (REG_IR & 0xf));	/* HJB 990403 */
 }

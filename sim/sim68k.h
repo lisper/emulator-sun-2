@@ -17,4 +17,7 @@ void cpu_pulse_reset(void);
 void cpu_set_fc(unsigned int fc);
 int  cpu_irq_ack(int level);
 
+unsigned int cpu_read(int size, unsigned int address);
+void cpu_write(int size, unsigned int address, unsigned int value);
+
 #endif /* SIM__HEADER */

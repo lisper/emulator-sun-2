@@ -1,7 +1,9 @@
 #include <stdio.h>
 #include <fcntl.h>
 #include <string.h>
+#include <unistd.h>
 
+#include "sim.h"
 #include "scsi.h"
 
 extern int trace_scsi;
@@ -37,6 +39,8 @@ struct scsi_unit_s {
   unsigned int block_no;
   unsigned char data[512*MAX_SCSI_BLOCKS];
 } scsi_units[8];
+
+int _scsi_set_filenum(int unit, int num);
 
 int _scsi_test_unit_ready(int id, unsigned char *cmd, int cmd_size, unsigned char **pbuf, int *psiz)
 {
@@ -391,6 +395,7 @@ int _scsi_set_state(void)
   case PHASE_MESSAGE_IN:
     scsi_bus_state |= SCSI_BUS_BSY | SCSI_BUS_MSG | SCSI_BUS_CD | SCSI_BUS_IO; break;
   }
+  return scsi_bus_state;
 }
 
 void _scsi_check_initiator(void)
@@ -644,7 +649,7 @@ scsi_bus_data = 0;
 
 void scsi_update(unsigned short *pdata, unsigned int out, unsigned int *pin, unsigned int *pirq)
 {
-  int irq;
+  unsigned int irq;
 
   if (out & SCSI_BUS_RST) {
       _scsi_set_phase(PHASE_BUS_FREE, 0);
@@ -743,6 +748,8 @@ int _scsi_next_file(int unit)
   if (scsi_units[unit].fname[current+1]) {
     _scsi_set_filenum(unit, current+1);
   }
+
+  return 0;
 }
 
 

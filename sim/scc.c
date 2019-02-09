@@ -97,7 +97,7 @@ void scc_in_push(int ch, int v)
   scc_ififo[ch].wptr &= 0xf;
 }
 
-int scc_in_pop(int ch, int *pv)
+int scc_in_pop(int ch, unsigned int *pv)
 {
   if (scc_ififo[ch].count <= 0) {
     *pv = -1;

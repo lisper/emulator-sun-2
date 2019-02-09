@@ -9897,7 +9897,7 @@ M68KMAKE_OP(tas, 8, ., .)
 
 M68KMAKE_OP(trap, 0, ., .)
 {
-	xxx();
+	//xxx();
 	/* Trap#n stacks exception frame type 0 */
 	m68ki_exception_trapN(EXCEPTION_TRAP_BASE + (REG_IR & 0xf));	/* HJB 990403 */
 }

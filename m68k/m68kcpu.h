@@ -482,12 +482,12 @@
 	/* Clear all tracing */
 	#define m68ki_clear_trace() m68ki_tracing = 0
 	/* Cause a trace exception if we are tracing */
-	#define m68ki_exception_if_trace() if(m68ki_tracing) m68ki_exception_trace()
+	#define m68ki_exception_if_trace() do { if(m68ki_tracing) m68ki_exception_trace(); } while (0)
 #else
 	#define m68ki_trace_t1()
 	#define m68ki_trace_t0()
 	#define m68ki_clear_trace()
-	#define m68ki_exception_if_trace()
+	#define m68ki_exception_if_trace() {}
 #endif /* M68K_EMULATE_TRACE */
 
 
@@ -1379,6 +1379,7 @@ INLINE void m68ki_jump_vector(uint vector)
 	{
 		extern int quiet;
 		if (!quiet) {
+			void m68ki_dump_state(void);
 			printf("m68ki_jump_vector (inline)\n");
 			m68ki_dump_state();
 			printf("68k: vector 0x%x, old pc 0x%x (prev pc 0x%x), ", vector, REG_PC, REG_PPC);

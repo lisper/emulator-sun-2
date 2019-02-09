@@ -254,7 +254,7 @@ void sc_dma_read_data(unsigned char *buf, int bufsiz)
 #endif
 
   for (i = 0; i < bufsiz; i++) {
-    int mtype, fault;
+    unsigned int mtype, fault;
     unsigned int va, pa, pte;
 
     va = 0xf00000 + sc_dma_addr;
@@ -294,7 +294,7 @@ void sc_dma_write_data(unsigned char *buf, int bufsiz)
 
   for (i = 0; i < bufsiz; i++) {
 
-    int mtype, fault;
+    unsigned int mtype, fault;
     unsigned int va, pa, pte;
 
     va = 0xf00000 + sc_dma_addr;

@@ -24,3 +24,21 @@ enum {
 #define SCSI_BUS_CD	0x004
 #define SCSI_BUS_REQ	0x002
 #define SCSI_BUS_IO	0x001
+
+int scsi_set_disk_image(int unit, char *fname);
+int scsi_set_tape_image(int unit, int fileno, char *fname);
+unsigned int scsi_read_cmd_byte(void);
+void scsi_write_cmd_byte(int value);
+
+int _scsi_next_file(int unit);
+void _scsi_update_bus_state(unsigned int out, unsigned int *pirq);
+
+void scsi_update(unsigned short *pdata, unsigned int out, unsigned int *pin, unsigned int *pirq);
+
+
+
+
+
+
+
+

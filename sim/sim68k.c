@@ -63,9 +63,6 @@ void trace_all();
 void exit_error(char* fmt, ...);
 int osd_get_char(void);
 
-unsigned int cpu_read(int size, unsigned int address);
-void cpu_write(int size, unsigned int address, unsigned int value);
-
 void trace_file_mem_rd(unsigned int ea, unsigned int pa, int fc, int size, unsigned int pte,
 		       int mtype, int fault, unsigned int value, unsigned int pc);
 void trace_file_mem_wr(unsigned int ea, unsigned int pa, int fc, int size, unsigned int pte,
@@ -81,17 +78,11 @@ void cpu_write_long(unsigned int address, unsigned int value);
 void cpu_pulse_reset(void);
 void cpu_set_fc(unsigned int fc);
 int cpu_irq_ack(int level);
-unsigned int cpu_map_address(unsigned int address, unsigned int fc, int m, int *mtype, int *pfault, unsigned int *ppte);
 
 void nmi_device_reset(void);
 //void nmi_device_update(void);
 int nmi_device_ack(void);
-
-void int_controller_set(unsigned int value);
-void int_controller_clear(unsigned int value);
-
 void get_user_input(void);
-
 void pending_buserr(void);
 
 
@@ -1011,7 +1002,7 @@ void int_controller_clear(unsigned int value)
 unsigned int m68k_read_disassembler_16(unsigned int address)
 {
   if ((m68k_get_reg(NULL, M68K_REG_SR) & 0x2000) == 0) {
-    int mtype, fault;
+    unsigned int mtype, fault;
     unsigned int pa, pte;
     pa = cpu_map_address(address, 1, 0, &mtype, &fault, &pte);
     if (fault) return 0;
@@ -1029,7 +1020,7 @@ unsigned int m68k_read_disassembler_16(unsigned int address)
 unsigned int m68k_read_disassembler_32(unsigned int address)
 {
   if ((m68k_get_reg(NULL, M68K_REG_SR) & 0x2000) == 0) {
-    int mtype, fault;
+    unsigned int mtype, fault;
     unsigned int pa, pte;
     pa = cpu_map_address(address, 1, 0, &mtype, &fault, &pte);
     if (fault) return 0;
@@ -1063,7 +1054,7 @@ void pending_buserr(void)
 #endif
 }
 
-unsigned int cpu_map_address(unsigned int address, unsigned int fc, int m, int *mtype, int *pfault, unsigned int *ppte)
+unsigned int cpu_map_address(unsigned int address, unsigned int fc, int m, unsigned int *mtype, unsigned int *pfault, unsigned int *ppte)
 {
   unsigned int context, segindex, pageindex, offset, pmeg_number, pgmapindex;
   unsigned int pte, pa, prot, proterr;
@@ -1139,11 +1130,15 @@ pmeg_number = ((pmeg_number << 1) & 0xfe) | (pmeg_number & 0x80 ? 0x01 : 0x00);
     *pfault = 1;
   }
 
-  if (trace_mmu > 1) {
+  int show = 0;
+  if (trace_mmu > 1) show = 1;
+  //if (buserr_reg && (fc == 5 || fc == 6)) show = 1;
+
+  if (show) {
     printf("mmu: address %x segindex 0x%x pmeg_number 0x%x pageindex 0x%x pgmapindex 0x%x\n",
 	   address, segindex, pmeg_number, pageindex, pgmapindex);
-    printf("mmu: pgmap[%d:%08x] -> %x; mtype %d, prot %x\n",
-	   context, address, pte, *mtype, prot);
+    printf("mmu: pgmap[%d:%08x] -> %x; mtype %d, prot %x;  buserr_reg %04x\n",
+	   context, address, pte, *mtype, prot, buserr_reg);
   }
 
   /*
@@ -1178,7 +1173,7 @@ extern void m68k_mark_buserr_fixup(unsigned access_address, int access_size);
 
 unsigned int cpu_read(int size, unsigned int address)
 {
-  int mtype, fault;
+  unsigned int mtype, fault;
   unsigned int pa, value, pte;
 
   // check for page crossing on 32bit read
@@ -1275,7 +1270,7 @@ unsigned int cpu_read(int size, unsigned int address)
 
 void cpu_write(int size, unsigned int address, unsigned int value)
 {
-  int mtype, fault;
+  unsigned int mtype, fault;
   unsigned int pa, pte;
 
   pa = cpu_map_address(address, g_fc, 1, &mtype, &fault, &pte);
@@ -1497,7 +1492,13 @@ void trace_file_entry(int what, unsigned int *record, int size)
   }
 
   if (trace_bin_fd == 0) {
-    trace_bin_fd = open("trace.bin", O_CREAT | O_TRUNC | O_LARGEFILE | O_WRONLY, 0666);
+#ifdef __linux__
+    int flags = O_CREAT | O_TRUNC | O_LARGEFILE | O_WRONLY;
+#else
+    int flags = O_CREAT | O_TRUNC | O_WRONLY;
+#endif
+
+    trace_bin_fd = open("trace.bin", flags, 0666);
   }
   if (trace_bin_fd != 0) {
     record[0] = (what << 8) | size;
@@ -1557,7 +1558,7 @@ void trace_file_pte_set(unsigned int address, unsigned int va, int bus_type, int
 void trace_file_cpu(void)
 {
   int ret;
-  unsigned int record[18];
+  unsigned int record[20];
 
   record[0] = (2 << 8) | 20;
   record[1] = m68k_get_reg(NULL, M68K_REG_PC);

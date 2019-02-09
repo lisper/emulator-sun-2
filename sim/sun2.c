@@ -25,7 +25,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#ifdef __APPLE__
+#include <SDL.h>
+#else
 #include <SDL/SDL.h>
+#endif
+
+#include "sim.h"
 
 static unsigned char *fbmem;
 static SDL_Surface *screen;
@@ -213,7 +219,7 @@ unsigned int sun2_video_write(unsigned int address, int size, unsigned int value
 
   offset = address & 0xfffff;
   if (offset >= 128*1024)
-    return;
+    return -1;
 
   switch (size) {
   case 1:
@@ -234,6 +240,7 @@ unsigned int sun2_video_write(unsigned int address, int size, unsigned int value
     break;
   }
   sdl_write(address & 0xfffff, size, value);
+  return 0;
 }
 
 unsigned int sun2_kbm_read(unsigned int address, int size)
@@ -247,8 +254,9 @@ unsigned int sun2_kbm_read(unsigned int address, int size)
 
 unsigned int sun2_kbm_write(unsigned int address, int size, unsigned int value)
 {
-  if (0) printf("sun2: scc write %x <- value(%d)\n", address, value, size);
-  return scc_write(address, value, size);
+  if (0) printf("sun2: scc write %x <- %x(%d)\n", address, value, size);
+  scc_write(address, value, size);
+  return 0;
 }
 
 unsigned int sun2_video_ctl_read(unsigned int address, int size)
@@ -262,6 +270,7 @@ unsigned int sun2_video_ctl_write(unsigned int address, int size, unsigned int v
 {
   printf("sun2: fb ctrl @ %x <- %x (%d)\n", address, value, size);
   fbctrl = value & 0xe07e;
+  return 0;
 }
 
 /* ----- */
@@ -324,7 +333,7 @@ void sun2_sdl_key(int sdl_code, int modifiers, unsigned int unicode, int down)
 #endif
 
 #if 1
-  if (sdl_code == SDLK_QUOTE & down) {
+  if (sdl_code == SDLK_QUOTE && down) {
     extern int trace_armed;
     if (trace_armed == 0) {
       trace_armed = 1;
@@ -337,7 +346,7 @@ void sun2_sdl_key(int sdl_code, int modifiers, unsigned int unicode, int down)
 #endif
 
 #if 0
-  if (sdl_code == SDLK_SEMICOLON & down) {
+  if (sdl_code == SDLK_SEMICOLON && down) {
     toggle_trace = !toggle_trace;
     if (toggle_trace) {
       printf("TRACE ENABLED!\n");
