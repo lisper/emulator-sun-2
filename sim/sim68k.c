@@ -81,7 +81,7 @@ void cpu_write_long(unsigned int address, unsigned int value);
 void cpu_pulse_reset(void);
 void cpu_set_fc(unsigned int fc);
 int cpu_irq_ack(int level);
-unsigned int cpu_map_address(unsigned int address, int m, int *mtype, int *pfault, unsigned int *ppte);
+unsigned int cpu_map_address(unsigned int address, unsigned int fc, int m, int *mtype, int *pfault, unsigned int *ppte);
 
 void nmi_device_reset(void);
 //void nmi_device_update(void);
@@ -114,6 +114,9 @@ int trace_mem_bin;
 int trace_sc;
 int trace_scsi;
 int trace_armed;
+int trace_irq;
+
+extern int quiet;
 
 unsigned int g_int_controller_pending = 0;	/* list of pending interrupts */
 unsigned int g_int_controller_highest_int = 0;	/* Highest pending interrupt */
@@ -202,6 +205,18 @@ unsigned int io_read(int size, unsigned int va, unsigned int pa)
 pending_buserr();
     break;
 
+  case 0x3800:
+  case 0x3802:
+  case 0x3804:
+  case 0x3806:
+  case 0x3808:
+  case 0x380a:
+  case 0x380c:
+  case 0x380e:
+  case 0x3828:
+    value = mm58167_read(pa, size);
+    break;
+
   default:
     printf("io: read %x -> %x (%d) pc %x\n", pa, value, size, m68k_get_reg(NULL, M68K_REG_PC));
     break;
@@ -228,6 +243,18 @@ void io_write(int size, unsigned int pa, unsigned int value)
 
   case 0x2800:
     am9513_write(pa, value, size);
+    break;
+
+  case 0x3800: // National MM58167
+  case 0x3802:
+  case 0x3804:
+  case 0x3806:
+  case 0x3808:
+  case 0x380a:
+  case 0x380c:
+  case 0x380e:
+  case 0x3828:
+    mm58167_write(pa, value, size);
     break;
 
   default:
@@ -262,8 +289,11 @@ void io_write(int size, unsigned int pa, unsigned int value)
 #define SUN2_BUSERROR_VMEBUSERR	0x40
 #define SUN2_BUSERROR_VALID	0x80
 
-//#define INTS_ENABLED	(sysen_reg & SUN2_SYSENABLE_EN_INT)
+#if 1
+#define INTS_ENABLED	(sysen_reg & SUN2_SYSENABLE_EN_INT)
+#else
 #define INTS_ENABLED	(1)
+#endif
 
 
 unsigned int buserr_reg;
@@ -309,6 +339,7 @@ void pgmap_write(unsigned int address, unsigned int value, int size)
   unsigned int pmeg = segmap[segindex];
   unsigned int pgmapindex = (pmeg << 4) | ((address >> 11) & 0xf);
   segindex = segmap[segindex];
+segindex = ((segindex << 1) & 0xfe) | (segindex & 0x80 ? 0x01 : 0x00);
   index = (segindex << 4) | ((address >> 11) & 0xf);
 
   pa = (value & PTE_PGFRAME) << PAGE_SIZE_LOG2;
@@ -319,12 +350,9 @@ void pgmap_write(unsigned int address, unsigned int value, int size)
 	 index, value, address, pa, pgtype, m68k_get_reg(NULL, M68K_REG_PC));
 
 #if 0
-  if (index == 0xb90 && address == 0x110000)
-    enable_trace(1);
+  printf("pgmap[%d:%08x] <- %x size %d index %x pc %x isn_count %lu\n",
+	 0, address, value, size, index, m68k_get_reg(NULL, M68K_REG_PC), g_isn_count);
 #endif
-
-//printf("pgmap[%d:%08x] <- %x size %d index %x pc %x isn_count %lu\n",
-//       0, address, value, size, index, m68k_get_reg(NULL, M68K_REG_PC), g_isn_count);
 
   if (trace_mmu_bin) {
     trace_file_pte_set(address, pa, pgtype, (sysen_reg & SUN2_SYSENABLE_EN_BOOTN) ? 1 : 0, value);
@@ -349,6 +377,7 @@ unsigned int pgmap_read(unsigned int address, int size)
   unsigned int pmeg = segmap[segindex];
   unsigned int pgmapindex = (pmeg << 4) | ((address >> 11) & 0xf);
   segindex = segmap[segindex];
+segindex = ((segindex << 1) & 0xfe) | (segindex & 0x80 ? 0x01 : 0x00);
   index = (segindex << 4) | ((address >> 11) & 0xf);
 
   value = pgmap[index];
@@ -392,7 +421,7 @@ unsigned int segmap_read(unsigned int address, int size)
 
 void context_write(unsigned int address, unsigned int value, int size)
 {
-  if (trace_mmu || 1) printf("mmu: context write %x <- %x (%d)\n", address, value, size);
+  if (trace_mmu) printf("mmu: context write %x <- %x (%d)\n", address, value, size);
 
   switch (address) {
   case sun2_context_reg:
@@ -401,14 +430,14 @@ void context_write(unsigned int address, unsigned int value, int size)
       context_user_reg = value & 0x7;
     }
     if (size == 1) {
-      context_sys_reg = value;
-      if (trace_mmu || 1) printf("mmu: write sys context <- %x\n", value & 7);
+      context_sys_reg = value & 0x7;
+      if (trace_mmu) printf("mmu: write sys context <- %x\n", value & 0x7);
     }
     break;
   case sun2_context_reg+1:
     if (size == 1) {
-      context_user_reg = value & 7;
-      if (trace_mmu || 1) printf("mmu: write user context <- %x\n", value & 7);
+      context_user_reg = value & 0x7;
+      if (trace_mmu) printf("mmu: write user context <- %x\n", value & 0x7);
     }
     break;
   }
@@ -426,9 +455,11 @@ unsigned int context_read(unsigned int address, int size)
     if (size == 1)
       value = context_sys_reg;
     break;
+    if (trace_mmu) printf("mmu: read user context (%d) -> %x\n", size, value);
   case sun2_context_reg+1:
     if (size == 1)
       value = context_user_reg;
+    if (trace_mmu) printf("mmu: read user context+1 (%d) -> %x\n", size, value);
     break;
   }
 
@@ -461,27 +492,53 @@ void diag_write(unsigned int address, unsigned int value, int size)
   }
 }
 
+
 void sysenable_read(unsigned int address, unsigned int *pvalue, int size)
 {
   unsigned int value;
   value = sysen_reg;
-  if (trace_mmu) printf("mmu: sysen read %x -> %x (%d)\n", address, value, size);
+  if (trace_mmu || trace_irq) printf("mmu: sysen read %x -> %x (%d)\n", address, value, size);
   *pvalue = value;
 }
 
+void sw_int_throw(int intr);
+
 void sysenable_write(unsigned int address, unsigned int value, int size)
 {
-  if (trace_mmu) printf("mmu: sysen write %x <- %x (%d)\n", address, value, size);
+  int replay = 0;
+  if (trace_mmu || trace_irq) printf("mmu: sysen write %x <- %x (%d)\n", address, value, size);
   switch (size) {
   case 2:
+    if ((sysen_reg & SUN2_SYSENABLE_EN_INT) && !(value & SUN2_SYSENABLE_EN_INT)) {
+      printf("sim68k: sysen_reg ints off; pending 0x%x, highest %d\n",
+	     g_int_controller_pending, g_int_controller_highest_int);
+    }
+    if (!(sysen_reg & SUN2_SYSENABLE_EN_INT) && (value & SUN2_SYSENABLE_EN_INT)) {
+      printf("sim68k: sysen_reg ints on; pending 0x%x, highest %d\n",
+	     g_int_controller_pending, g_int_controller_highest_int);
+      replay = 1;
+    }
+
     sysen_reg = value;
     if (trace_mmu) printf("mmu: sysen %x\n", sysen_reg);
 #if 0
     if (value > 0xff)
       enable_trace(1);
 #endif
+
+    if (replay) {
+      if (g_int_controller_highest_int != 0)
+	m68k_set_irq(g_int_controller_highest_int);
+    }
     break;
   }
+
+  if (sysen_reg & SUN2_SYSENABLE_EN_INT1)
+    sw_int_throw(1);
+  if (sysen_reg & SUN2_SYSENABLE_EN_INT2)
+    sw_int_throw(2);
+  if (sysen_reg & SUN2_SYSENABLE_EN_INT3)
+    sw_int_throw(3);
 }
 
 unsigned int map_idprom_address(unsigned int address)
@@ -716,14 +773,48 @@ unsigned int cpu_read_long(unsigned int address)
   if (trace_cpu_rw)
     printf("cpu_read_long fc=%x %x -> %x\n", g_fc, address, value);
 
-#if 0
-  if (address == 0x88454)
-    printf("XXX: cpu_read_long fc=%x %x -> %x @ %x\n", g_fc, address, value, m68k_get_reg(NULL, M68K_REG_PC));
-#endif
-
   return value;
 }
 
+
+// debug - check if r/w address is mapped into context 3 (the next user proc)
+void _check_write(unsigned pa, unsigned b, int size)
+{
+  int i, j;
+
+  if (!trace_armed)
+    return;
+
+  if ((m68k_get_reg(NULL, M68K_REG_PC) & 0xff0000) == 0xef0000)
+    return;
+
+  for (i = 0; i < 0x20; i++) {
+    unsigned int segindex, pmeg_number, pgmapindex, pte, mapped_pa;
+    segindex = (i << 3) | 3;
+    pmeg_number = segmap[segindex];
+    pmeg_number = ((pmeg_number << 1) & 0xfe) | (pmeg_number & 0x80 ? 0x01 : 0x00);
+
+    if (pmeg_number == 0)
+      continue;
+
+    for (j = 0; j < 16; j++) {
+      pgmapindex = (pmeg_number << 4) | j;
+      pte = pgmap[pgmapindex];
+      if ((pte & 0x80000000) == 0)
+	continue;
+      mapped_pa = (pte & 0x00fff) << 11;
+      mapped_pa &= 0x00ffffff;
+      if (mapped_pa == (pa & ~0x7ff)) {
+	unsigned va;
+	va =  (i << 15) | (j << 11);
+	printf("write to mapped context3 space; pa %08x, v %02x, s %d (va %06x); sr %04x, pc %06x\n",
+	       pa, b, size, va, 
+	       m68k_get_reg(NULL, M68K_REG_SR), m68k_get_reg(NULL, M68K_REG_PC));
+	break;
+      }
+    }
+  }
+}
 
 /* Write data to RAM or a device */
 void cpu_write_byte(unsigned int address, unsigned int value)
@@ -731,11 +822,8 @@ void cpu_write_byte(unsigned int address, unsigned int value)
   if (trace_cpu_rw)
     printf("cpu_write_byte fc=%x %x <- %x @ %x\n", g_fc, address, value, m68k_get_reg(NULL, M68K_REG_PC));
 
-#if 0
-    if (address >= 0x3fb70 && address <= 0x3fb80) {
-      printf("XXX write byte to %x <- %x\n", address, value);
-    }
-#endif
+  { extern uint m68ki_fault_pending; if (m68ki_fault_pending) printf("PENDING FAULT! cpu_write_byte %08x\n", address); }
+  //_check_write(address, value, 1);
 
   WRITE_BYTE(g_ram, address, value);
 }
@@ -745,30 +833,19 @@ void cpu_write_word(unsigned int address, unsigned int value)
   if (trace_cpu_rw)
     printf("cpu_write_word fc=%x %x <- %x @ %x\n", g_fc, address, value, m68k_get_reg(NULL, M68K_REG_PC));
 
-#if 0
-    if (address >= 0x3fb70 && address <= 0x3fb80) {
-      printf("XXX write word to %x <- %x\n", address, value);
-    }
-#endif
+  { extern uint m68ki_fault_pending; if (m68ki_fault_pending) printf("PENDING FAULT! cpu_write_word %08x\n", address); }
+  //_check_write(address, value, 2);
 
   WRITE_WORD(g_ram, address, value);
 }
 
 void cpu_write_long(unsigned int address, unsigned int value)
 {
-#if 0
-  if (address == 0x88454)
-  printf("XXX: cpu_write_long fc=%x %x <- %x @ %x\n", g_fc, address, value, m68k_get_reg(NULL, M68K_REG_PC));
-#endif
-
   if (trace_cpu_rw)
     printf("cpu_write_long fc=%x %x <- %x @ %x\n", g_fc, address, value, m68k_get_reg(NULL, M68K_REG_PC));
 
-#if 0
-    if (address >= 0x3fb70 && address <= 0x3fb80) {
-      printf("XXX write long to %x <- %x\n", address, value);
-    }
-#endif
+  { extern uint m68ki_fault_pending; if (m68ki_fault_pending) printf("PENDING FAULT! cpu_write_long %08x\n", address); }
+  //_check_write(address, value, 4);
 
   if (address < MAX_RAM) {
     WRITE_LONG(g_ram, address, value);
@@ -790,6 +867,7 @@ void cpu_set_fc(unsigned int fc)
 /* Called when the CPU acknowledges an interrupt */
 int cpu_irq_ack(int level)
 {
+  if (level != 7 && trace_irq) printf("cpu_irq_ack(%d)\n", level);
   switch(level)
     {
 //    case IRQ_NMI_DEVICE:
@@ -800,12 +878,52 @@ int cpu_irq_ack(int level)
       return am9513_device_ack(1);
     case IRQ_9513_TIMER2:
       return am9513_device_ack(2);
+    case IRQ_SCC:
+      return scc_device_ack(1);
+    case IRQ_SW_INT1:
+      return sw_int_ack(1);
+//    case IRQ_SW_INT2:
+//      return sw_int_ack(2);
+    case IRQ_SW_INT3:
+      return sw_int_ack(3);
     }
   return M68K_INT_ACK_SPURIOUS;
 }
 
 
+int sw_int_ack(int intr)
+{
+  if (trace_irq) printf("sysen: sw int ack\n");
+  switch (intr) {
+  case 1:
+    int_controller_clear(IRQ_SW_INT1);
+    break;
+  case 2:
+    int_controller_clear(IRQ_SW_INT2);
+    break;
+  case 3:
+    int_controller_clear(IRQ_SW_INT3);
+    break;
+  }
+  return M68K_INT_ACK_AUTOVECTOR;
+}
 
+
+void sw_int_throw(int intr)
+{
+  if (trace_irq) printf("sysen: sw int throw\n");
+  switch (intr) {
+  case 1:
+    int_controller_set(IRQ_SW_INT1);
+    break;
+  case 2:
+    int_controller_set(IRQ_SW_INT2);
+    break;
+  case 3:
+    int_controller_set(IRQ_SW_INT3);
+    break;
+  }
+}
 
 /* Implementation for the NMI device */
 void nmi_device_reset(void)
@@ -834,6 +952,7 @@ static unsigned int sdl_poll_delay;
 void io_update(void)
 {
   am9513_update();
+  mm58167_update();
   scc_update();
 
   if (sdl_poll_delay++ == 10000) {
@@ -852,6 +971,9 @@ void int_controller_set(unsigned int value)
 {
   unsigned int old_pending = g_int_controller_pending;
 
+  if (value != 7 && trace_irq)
+    printf("sim68k: int_controller_set(%d) old_pending %d, INTS_ENABLED %d\n", value, old_pending, INTS_ENABLED);
+
   g_int_controller_pending |= (1<<value);
 
   if(old_pending != g_int_controller_pending && value > g_int_controller_highest_int)
@@ -859,12 +981,18 @@ void int_controller_set(unsigned int value)
       g_int_controller_highest_int = value;
       if (INTS_ENABLED) {
 	m68k_set_irq(g_int_controller_highest_int);
-      }
+      } else
+	printf("sim68k: ints not enabled; set %d\n", value);
     }
+  else printf("sim68k: tried to set irq %d (old_pending 0x%x, controller_pending 0x%x. highest_int %d)\n",
+	      value, old_pending, g_int_controller_pending, g_int_controller_highest_int);
 }
 
 void int_controller_clear(unsigned int value)
 {
+  if (value != 7 && trace_irq)
+    printf("sim68k: int_controller_clear(%d)\n", value);
+
   g_int_controller_pending &= ~(1<<value);
 
   for(g_int_controller_highest_int = 7;g_int_controller_highest_int > 0;g_int_controller_highest_int--)
@@ -872,6 +1000,10 @@ void int_controller_clear(unsigned int value)
       break;
 
   if (INTS_ENABLED) {
+    if (trace_irq)
+      printf("sim68k: int_controller_clear(%d) asserting lower int %d (sr %04x)\n",
+	     value, g_int_controller_highest_int, m68k_get_reg(NULL, M68K_REG_SR));
+
     m68k_set_irq(g_int_controller_highest_int);
   }
 }
@@ -879,11 +1011,9 @@ void int_controller_clear(unsigned int value)
 unsigned int m68k_read_disassembler_16(unsigned int address)
 {
   if ((m68k_get_reg(NULL, M68K_REG_SR) & 0x2000) == 0) {
-    int mtype, fault, fc;
+    int mtype, fault;
     unsigned int pa, pte;
-    fc = g_fc; g_fc = 1;
-    pa = cpu_map_address(address, 0, &mtype, &fault, &pte);
-    g_fc = fc;
+    pa = cpu_map_address(address, 1, 0, &mtype, &fault, &pte);
     if (fault) return 0;
     return READ_WORD(g_ram, pa);
   }
@@ -899,11 +1029,9 @@ unsigned int m68k_read_disassembler_16(unsigned int address)
 unsigned int m68k_read_disassembler_32(unsigned int address)
 {
   if ((m68k_get_reg(NULL, M68K_REG_SR) & 0x2000) == 0) {
-    int mtype, fault, fc;
+    int mtype, fault;
     unsigned int pa, pte;
-    fc = g_fc; g_fc = 1;
-    pa = cpu_map_address(address, 0, &mtype, &fault, &pte);
-    g_fc = fc;
+    pa = cpu_map_address(address, 1, 0, &mtype, &fault, &pte);
     if (fault) return 0;
     return READ_LONG(g_ram, pa);
   }
@@ -922,7 +1050,7 @@ void pending_buserr(void)
   g_buserr_pc = m68k_get_reg(NULL, M68K_REG_PPC);
   m68k_mark_buserr();
 
-#if 1
+#if 0
   {
     extern unsigned int m68ki_access_pc;
     extern unsigned int m68ki_access_address;
@@ -935,7 +1063,7 @@ void pending_buserr(void)
 #endif
 }
 
-unsigned int cpu_map_address(unsigned int address, int m, int *mtype, int *pfault, unsigned int *ppte)
+unsigned int cpu_map_address(unsigned int address, unsigned int fc, int m, int *mtype, int *pfault, unsigned int *ppte)
 {
   unsigned int context, segindex, pageindex, offset, pmeg_number, pgmapindex;
   unsigned int pte, pa, prot, proterr;
@@ -943,10 +1071,10 @@ unsigned int cpu_map_address(unsigned int address, int m, int *mtype, int *pfaul
   *pfault = 0;
   *mtype = 0;
 
-  if (g_fc == 3)
+  if (fc == 3)
     return address;
 
-  if ((sysen_reg & SUN2_SYSENABLE_EN_BOOTN) == 0 && g_fc == 6) {
+  if ((sysen_reg & SUN2_SYSENABLE_EN_BOOTN) == 0 && fc == 6) {
     /* boot */
     //printf("map: %x -> %x (boot)\n", address, address);
     *mtype = PGTYPE_OBIO;
@@ -954,10 +1082,11 @@ unsigned int cpu_map_address(unsigned int address, int m, int *mtype, int *pfaul
   }
 
   /* normal */
-  context = g_fc < 3 ? context_user_reg : context_sys_reg;
+  context = fc < 4 ? context_user_reg : context_sys_reg;
 
   segindex = (((address >> 15) & 0x1ff) << 3) | context;
   pmeg_number = segmap[segindex];
+pmeg_number = ((pmeg_number << 1) & 0xfe) | (pmeg_number & 0x80 ? 0x01 : 0x00);
   pageindex = (address >> 11) & 0xf;
   pgmapindex = (pmeg_number << 4) | pageindex;
   pte = pgmap[pgmapindex];
@@ -978,7 +1107,7 @@ unsigned int cpu_map_address(unsigned int address, int m, int *mtype, int *pfaul
    */
   proterr = 0;
   if (m == 0)
-    switch (g_fc) {
+    switch (fc) {
     case 1: /* u+r */
       if ((prot & 0x04) == 0) proterr = 1; break;
     case 2: /* u+x */
@@ -989,10 +1118,9 @@ unsigned int cpu_map_address(unsigned int address, int m, int *mtype, int *pfaul
       if ((prot & 0x08) == 0) proterr = 1; break;
     }
   else
-    switch (g_fc) {
+    switch (fc) {
     case 1: /* u+w */
       if ((prot & 0x02) == 0) proterr = 1; break;
-break;
     case 5: /* s+w */
       if ((prot & 0x10) == 0) proterr = 1; break;
     }
@@ -1035,31 +1163,48 @@ break;
 
   pa |= offset;
 
-pa &= 0x00ffffff;
+  // we're a 24 bit PA cpu 
+  pa &= 0x00ffffff;
 
   if (trace_mmu) {
-    printf("map: %x -> %x pte %x p%x m%d context %x segindex %x pageindex %x pgmapindex %x offset %x\n",
-	   address, pa, pte, prot, *mtype, context, segindex, pageindex, pgmapindex, offset);
+    printf("map: %x -> %x pte %x p%x m%d fc %d context %x segindex %x pageindex %x pgmapindex %x offset %x\n",
+	   address, pa, pte, prot, *mtype, fc, context, segindex, pageindex, pgmapindex, offset);
   }
 
   return pa;
 }
+
+extern void m68k_mark_buserr_fixup(unsigned access_address, int access_size);
 
 unsigned int cpu_read(int size, unsigned int address)
 {
   int mtype, fault;
   unsigned int pa, value, pte;
 
-  pa = cpu_map_address(address, 0, &mtype, &fault, &pte);
+  // check for page crossing on 32bit read
+  if (((address & 0x7ff) + size-1) > 0x7ff) {
+    if (size == 4) {
+      unsigned v1, v2;
+
+	v1 = cpu_read(2, address);
+	if (g_buserr == 0) {
+	  v2 = cpu_read(2, address+2);
+	  if (g_buserr)
+	    m68k_mark_buserr_fixup(address+2, 2);
+	}
+
+	return (v1 << 16) | v2;
+    }
+  }
+
+  pa = cpu_map_address(address, g_fc, 0, &mtype, &fault, &pte);
 
   if (trace_cpu_rw)
-  printf("cpu_read: va %x pa %x fc %x size %d mtype %d fault %d\n", address, pa, g_fc, size, mtype, fault);
+    printf("cpu_read: va %x pa %x fc %x size %d mtype %d fault %d\n", address, pa, g_fc, size, mtype, fault);
 
   if (g_fc == 3) {
     return mmu_read(address, size);
   }
-
-  //printf("cpu_read: va %x pa %x fc %x size %d mtype %d fault %d\n", address, pa, g_fc, size, mtype, fault);
 
   value = 0;
 
@@ -1069,11 +1214,13 @@ unsigned int cpu_read(int size, unsigned int address)
       trace_all();
     }
     if (sysen_reg & SUN2_SYSENABLE_EN_BOOTN) {
-      printf("fault: bus error! read, pc %x isn_count %lu\n",
-	     m68k_get_reg(NULL, M68K_REG_PC), g_isn_count);
+      if (!quiet) {
+	printf("fault: bus error! read, pc %x sr %04x isn_count %lu\n",
+	       m68k_get_reg(NULL, M68K_REG_PC), m68k_get_reg(NULL, M68K_REG_SR), g_isn_count);
 
-      printf("cpu_read: va %x pa %x fc %x size %d mtype %d fault %d, pte %x\n",
-	     address, pa, g_fc, size, mtype, fault, pte);
+	printf("cpu_read: va %x pa %x fc %x size %d mtype %d fault %d, pte %x\n",
+	       address, pa, g_fc, size, mtype, fault, pte);
+      }
 
       pending_buserr();
     }
@@ -1087,7 +1234,6 @@ unsigned int cpu_read(int size, unsigned int address)
 	printf("cpu_read; OBMEM va %x pa %x size %d -> %x (pte %x) @ %x\n",
 	       address, pa, size, value, pte, m68k_get_reg(NULL, M68K_REG_PC));
 #endif
-//      if (address >= (4*1024*1024) && address < 0x700000)
       if (pa >= (4*1024*1024) && pa < 0x700000)
 	value = 0xffffffff;
       else
@@ -1118,7 +1264,6 @@ unsigned int cpu_read(int size, unsigned int address)
 
     default:
       printf("cpu_read: mtype %d; address %x pa %x size %d pte %x\n", mtype, address, pa, size, pte);
-//      exit(1);
     }
   }
 
@@ -1133,7 +1278,7 @@ void cpu_write(int size, unsigned int address, unsigned int value)
   int mtype, fault;
   unsigned int pa, pte;
 
-  pa = cpu_map_address(address, 1, &mtype, &fault, &pte);
+  pa = cpu_map_address(address, g_fc, 1, &mtype, &fault, &pte);
 
   if (trace_cpu_rw)
     printf("cpu_write: va %x pa %x fc %x size %d mtype %d fault %d\n",
@@ -1154,11 +1299,13 @@ void cpu_write(int size, unsigned int address, unsigned int value)
       //trace_all();
     }
     if (sysen_reg & SUN2_SYSENABLE_EN_BOOTN) {
-      printf("fault: bus error! write, pc %x isn_count %lu\n",
-	     m68k_get_reg(NULL, M68K_REG_PC), g_isn_count);
+      if (!quiet) {
+	printf("fault: bus error! write, pc %x sr %04x isn_count %lu\n",
+	       m68k_get_reg(NULL, M68K_REG_PC),	m68k_get_reg(NULL, M68K_REG_SR), g_isn_count);
 
-      printf("cpu_write: va %x pa %x fc %x size %d mtype %d fault %d, pte %x\n",
-	     address, pa, g_fc, size, mtype, fault, pte);
+	printf("cpu_write: va %x pa %x fc %x size %d mtype %d fault %d, pte %x\n",
+	       address, pa, g_fc, size, mtype, fault, pte);
+      }
 
       pending_buserr();
     }
@@ -1178,6 +1325,19 @@ void cpu_write(int size, unsigned int address, unsigned int value)
     if (pa >= 0x700000)
       cpu_write_obmem(pa, size, value);
     else {
+      // check for 32bit writes crossing a page
+      if (((address & 0x7ff) + size-1) > 0x7ff) {
+	if (size == 4) {
+	  cpu_write(2, address,   value >> 16);
+	  if (g_buserr == 0) {
+	    cpu_write(2, address+2, value);
+	    if (g_buserr)
+	      m68k_mark_buserr_fixup(address+2, 2);
+	  }
+	  return;
+	}
+      }
+
       switch (size) {
       case 1: cpu_write_byte(pa, value); break;
       case 2: cpu_write_word(pa, value); break;
@@ -1227,10 +1387,6 @@ void trace_short(void)
     exit(1);
   }
 
-//  if (pc == 0xef0b82) {
-//    m68k_set_reg(M68K_REG_D0, 0x1);
-//  }
-
   printf("\n");
   printf("%lu %06x:%s\tSR:%04x A0:%06x A1:%06x A4:%06x A5:%06x A6:%06x A7:%06x D0:%08x D1 %08x D5 %08x\n",
 	 g_isn_count, pc, buf,
@@ -1240,16 +1396,105 @@ void trace_short(void)
 	 m68k_get_reg(NULL, M68K_REG_A6), m68k_get_reg(NULL, M68K_REG_A7),
 	 m68k_get_reg(NULL, M68K_REG_D0), m68k_get_reg(NULL, M68K_REG_D1),
 	 m68k_get_reg(NULL, M68K_REG_D5));
-
-//  if(pc > 0x8000)
-//    termination_handler(0);
 }
 
 int trace_bin_fd;
+int trace_bin_history;
+unsigned int trace_bin_last[64][20];
+unsigned int trace_bin_last_ptr;
+
+void trace_file_history_dump(void)
+{
+  int i, p;
+
+  printf("trace history:\n");
+
+  p = trace_bin_last_ptr;
+  for (i = 0; i < 64; i++) {
+    unsigned int *data = &trace_bin_last[p][0];
+    int what = data[0] >> 8;
+    unsigned int pc, sr, size;
+
+    switch (what) {
+    case 1:
+    case 2:
+      printf("\n");
+      pc = data[1];
+      sr = data[2];
+
+      printf("pc %06x sr %04x ", pc, sr);
+
+      {
+	char buf[256];
+	m68k_disassemble(buf, pc, M68K_CPU_TYPE_68010); 
+	printf("%s\n", buf);
+      }
+
+#if 1
+      printf(" D0:%08x D1:%08x D2:%08x D3:%08x D4:%08x D5:%08x D6:%08x D7:%08x\n",
+	     data[11], data[12], data[13], data[14], 
+	     data[15], data[16], data[17], data[18]);
+      printf(" A0:%08x A1:%08x A2:%08x A3:%08x A4:%08x A5:%08x A6:%08x A7:%08x\n",
+	     data[3], data[4], data[5], data[6], 
+	     data[7], data[8], data[9], data[10]);
+#endif
+      break;
+    case 11:
+      printf(" tlb fill; ");
+      printf(" pc %06x address %08x va %08x bus_type %d boot %d pte %08x\n",
+	     data[1], data[2], data[3], data[4], data[5], data[6]);
+      break;
+    case 12:
+      printf(" pte set; ");
+      printf(" pc %06x address %08x pa %08x bus_type %d context_user %d pte %08x\n",
+	     data[1], data[2], data[3], data[4], data[5], data[6]);
+      break;
+    case 21:
+      size = data[2] & 0xffff;
+      printf(" mem write; ");
+      printf(" pc %06x size %d fc %d ea %08x value %08x\n",
+	     data[1], size, data[3], data[4], data[5]);
+
+      {
+	int mtype, fault;
+	mtype = (data[2] >> 16) & 0xff;
+	fault = (data[2] >> 24) & 0xff;
+	printf(" pa %x mtype %d fault %d pte %08x\n", data[6], mtype, fault, data[7]);
+      }
+      break;
+    case 22:
+      size = data[2] & 0xffff;
+      printf(" mem read; ");
+      printf(" pc %06x size %d fc %d ea %08x value %08x\n",
+	     data[1], size, data[3], data[4], data[5]);
+      {
+	int mtype, fault;
+	mtype = (data[2] >> 16) & 0xff;
+	fault = (data[2] >> 24) & 0xff;
+	printf(" pa %x mtype %d fault %d pte %08x\n", data[6], mtype, fault, data[7]);
+      }
+      break;
+    }
+
+    if (++p == 64) p = 0;
+  }
+}
 
 void trace_file_entry(int what, unsigned int *record, int size)
 {
   int ret, bytes;
+
+  if (trace_bin_history) {
+    int i;
+    for (i = 1; i < size; i++)
+      trace_bin_last[trace_bin_last_ptr][i] = record[i];
+    trace_bin_last[trace_bin_last_ptr][0] = (what << 8) | size;
+
+    trace_bin_last_ptr++;
+    if (trace_bin_last_ptr == 64)
+      trace_bin_last_ptr = 0;
+    return;
+  }
 
   if (trace_bin_fd == 0) {
     trace_bin_fd = open("trace.bin", O_CREAT | O_TRUNC | O_LARGEFILE | O_WRONLY, 0666);
@@ -1347,13 +1592,14 @@ void trace_all()
   m68k_disassemble(buf, pc, M68K_CPU_TYPE_68010); 
 
   printf("\n");
-  printf("PC %06x sr %04x usp %06x isp %06x sp %06x vbr %06x\n",
+  printf("PC %06x sr %04x usp %06x isp %06x sp %06x context %02x%02x\n",
 	 m68k_get_reg(NULL, M68K_REG_PC),
 	 m68k_get_reg(NULL, M68K_REG_SR),
 	 m68k_get_reg(NULL, M68K_REG_USP),
 	 m68k_get_reg(NULL, M68K_REG_ISP),
 	 m68k_get_reg(NULL, M68K_REG_SP),
-	 m68k_get_reg(NULL, M68K_REG_VBR));
+	 context_sys_reg, context_user_reg
+	 /*m68k_get_reg(NULL, M68K_REG_VBR)*/);
 
   printf("%s\n", buf);
 
@@ -1374,26 +1620,45 @@ void enable_trace(int what)
 {
   switch (what) {
   case 0:
-    trace_cpu_isn = 0;
-    trace_cpu_rw = 0;
     trace_cpu_io = 0;
+    trace_cpu_rw = 0;
+    trace_cpu_isn = 0;
+    trace_mmu = 0;
+    trace_mmu_rw = 0;
     break;
 
   case 1:
   default:
-    trace_cpu_isn = 1;
-    trace_cpu_rw = 1;
     trace_cpu_io = 1;
+    trace_cpu_rw = 1;
+    trace_cpu_isn = 1;
     break;
 
   case 2:
     trace_cpu_io = 1;
     trace_cpu_rw = 1;
     trace_cpu_isn = 1;
-//    trace_mmu = 1;
+    trace_mmu = 1;
     trace_mmu_rw = 1;
     break;
+
+  case 3:
+#if 0
+    trace_cpu_io = 1;
+    trace_cpu_rw = 1;
+    trace_cpu_isn = 1;
+
+    trace_mmu    = 1;
+    trace_mmu_rw = 1;
+#endif
+    break;
   }
+}
+
+void xxx(void)
+{
+  //trace_all();
+  //enable_trace(3);
 }
 
 char cc[256];
@@ -1408,6 +1673,7 @@ void collect_console(int ch)
     cc_n = 0;
   }
 }
+
 
 void sim68k(void)
 {
@@ -1433,11 +1699,13 @@ void sim68k(void)
 
 g_trace = 1;
 
-
+#ifndef M68K_V33
+  m68k_init();
+#endif
   m68k_set_cpu_type(M68K_CPU_TYPE_68010);
   m68k_pulse_reset();
 //  m68k_set_reg(M68K_REG_VBR, 0x00ef0000);
-trace_all();
+//trace_all();
 
   nmi_device_reset();
   io_init();
@@ -1475,83 +1743,14 @@ trace_all();
 	}
       }
 
-#if 0
-      /* m68k_get_reg(NULL, M68K_REG_PC) < 0x00e00000  */
-      if (isn_count == 28000000 && trace_cpu_io == 0) {
-	enable_trace(2);
-      }
-#endif
-
-#if 0
-      if (m68k_get_reg(NULL, M68K_REG_PC) == 0x4000 && trace_armed) {
-	enable_trace(1);
-      }
-#endif
-
 #if 1
-      if (m68k_get_reg(NULL, M68K_REG_PC) == 0x4000 && trace_armed) {
-	trace_cpu_bin = trace_mmu_bin = trace_mem_bin = 1;
-      }
-#endif
-
-
-#if 0
-      if (m68k_get_reg(NULL, M68K_REG_PC) == 0x3a364) {
-	printf("XXX: _startup\n");
-	printf("XXX: _mapin %02x%02x%02x%02x\n",
-	       g_ram[0x3fb7e], g_ram[0x3fb7f], g_ram[0x3fb80], g_ram[0x3fb81]);
-	enable_trace(1);
-      }
-      if (m68k_get_reg(NULL, M68K_REG_PC) == 0x3a5d2) {
-	enable_trace(1);
-      }
-      if (m68k_get_reg(NULL, M68K_REG_PC) == 0x3a5de) {
-	enable_trace(0);
-      }
-#endif
-
-#if 0
-      if (m68k_get_reg(NULL, M68K_REG_PC) == 0x38b74) {
-	enable_trace(1);
-      }
-#endif
-#if 0
-      if (m68k_get_reg(NULL, M68K_REG_PC) == 0x51f9c) {
-	enable_trace(1);
-      }
-#endif
-#if 0
-//      if (m68k_get_reg(NULL, M68K_REG_PC) == 0x41d50) {
-//	enable_trace(1);
-//      }
-      if (m68k_get_reg(NULL, M68K_REG_PC) == 0x41fa0) {
-	enable_trace(1);
-      }
-#endif
-#if 1
-      if (m68k_get_reg(NULL, M68K_REG_PC) == 0x12450) {
-	enable_trace(1);
-	abortf("_panic\n");
-      }
-#endif
-#if 0
-      if (m68k_get_reg(NULL, M68K_REG_PC) == 0x3aeb6) {
-	printf("_icode\n");
-	enable_trace(2);
-      }
-#endif
-#if 0
-      if (m68k_get_reg(NULL, M68K_REG_PC) == 0x231f0) {
-	abortf("_sched\n");
-      }
-#endif
-#if 1
-      if (m68k_get_reg(NULL, M68K_REG_PC) == 0x12516) {
+      if (m68k_get_reg(NULL, M68K_REG_PC) == 0x12516) {  // sunos 2.0 _putchar
 	unsigned int d0;
 	d0 = m68k_get_reg(NULL, M68K_REG_D0);
 	collect_console(d0);
       }
 #endif
+
 #if 0
       if (m68k_get_reg(NULL, M68K_REG_PC) == 0x8000 &&
 	  (m68k_get_reg(NULL, M68K_REG_SR) & 0x2000) == 0)
@@ -1559,15 +1758,80 @@ trace_all();
 	enable_trace(1);
       }
 #endif
+#if 0
+      if ((m68k_get_reg(NULL, M68K_REG_SR) & 0x2000) == 0) {
+	enable_trace(2);
+      }
+#endif
 
-//      if (isn_count >= (24*1000*1000)) {
-//	while (1) sdl_poll();
-//	break;
-//      }
+#if 0
+      if ((m68k_get_reg(NULL, M68K_REG_SR) & 0x2000) == 0) {
+	enable_trace(2);
+      } else {
+	enable_trace(0);
+      }
+#endif
+
+#if 0
+      if (trace_armed && (m68k_get_reg(NULL, M68K_REG_SR) & 0x2000) == 0) {
+	enable_trace(2);
+      }
+#endif
+
+#if 0
+      if (m68k_get_reg(NULL, M68K_REG_SR) & 0xc000) {
+	enable_trace(2);
+      } else {
+	enable_trace(0);
+      }
+#endif
+
+#if 0
+      if (isn_count >= (24*1000*1000)) {
+	while (1) sdl_poll();
+	break;
+      }
+#endif
 
     }
 
 }
+
+#ifndef M68K_V33
+unsigned int  m68k_read_memory_8(unsigned int address)
+{
+  return cpu_read(1, address);
+}
+
+unsigned int  m68k_read_memory_16(unsigned int address)
+{
+  return cpu_read(2, address);
+}
+
+unsigned int  m68k_read_memory_32(unsigned int address)
+{
+  return cpu_read(4, address);
+}
+
+
+/* Write to anywhere */
+void m68k_write_memory_8(unsigned int address, unsigned int value)
+{
+  cpu_write(1, address, value);
+}
+
+void m68k_write_memory_16(unsigned int address, unsigned int value)
+{
+  cpu_write(2, address, value);
+}
+
+void m68k_write_memory_32(unsigned int address, unsigned int value)
+{
+  cpu_write(4, address, value);
+}
+
+
+#endif
 
 /* Local Variables:  */
 /* mode: c           */

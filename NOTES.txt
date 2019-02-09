@@ -1,0 +1,10 @@
+(cd sim; make)
+
+sim/sim --prom=media/rom/sun2-multi-rev-R.bin --disk=./my-sun2-disk.img  --tape=media/tape/tape3.5 -q
+
+sim/sim --prom=media/rom/sun2-multi-rev-R.bin --disk=./my-sun2-s2.0-disk.img  --tape=media/tape/tape2.0 -q
+
+sim/sim --prom=media/rom/sun2-multi-rev-R.bin --disk=./my-sun2-s2.0-disk.img  --tape=media/tape/sunos-2.0-sun2/tape2 -q
+
+
+

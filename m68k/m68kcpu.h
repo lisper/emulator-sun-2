@@ -828,8 +828,10 @@ extern uint8          m68ki_fault_fc;
 extern uint8          m68ki_fault_write;
 extern uint8          m68ki_fault_size;
 #define FAULT_NOT_PENDING	(!m68ki_fault_pending)
+#define FAULT_PENDING		(m68ki_fault_pending)
 #else
 #define FAULT_NOT_PENDING	(1)
+#define FAULT_PENDING		(0)
 #endif
 
 /* Read data immediately after the program counter */
@@ -1208,12 +1210,21 @@ INLINE uint m68ki_get_ea_ix(uint An)
 INLINE uint OPER_AY_AI_8(void)  {uint ea = EA_AY_AI_8();  return m68ki_read_8(ea); }
 INLINE uint OPER_AY_AI_16(void) {uint ea = EA_AY_AI_16(); return m68ki_read_16(ea);}
 INLINE uint OPER_AY_AI_32(void) {uint ea = EA_AY_AI_32(); return m68ki_read_32(ea);}
-INLINE uint OPER_AY_PI_8(void)  {uint ea = EA_AY_PI_8();  return m68ki_read_8(ea); }
-INLINE uint OPER_AY_PI_16(void) {uint ea = EA_AY_PI_16(); return m68ki_read_16(ea);}
-INLINE uint OPER_AY_PI_32(void) {uint ea = EA_AY_PI_32(); return m68ki_read_32(ea);}
-INLINE uint OPER_AY_PD_8(void)  {uint ea = EA_AY_PD_8();  return m68ki_read_8(ea); }
-INLINE uint OPER_AY_PD_16(void) {uint ea = EA_AY_PD_16(); return m68ki_read_16(ea);}
-INLINE uint OPER_AY_PD_32(void) {uint ea = EA_AY_PD_32(); return m68ki_read_32(ea);}
+#if 0
+INLINE uint OPER_AY_PI_8(void)  {uint ea = EA_AY_PI_8();  return m68ki_read_8(ea); } //xxx
+INLINE uint OPER_AY_PI_16(void) {uint ea = EA_AY_PI_16(); return m68ki_read_16(ea);} //xxx
+INLINE uint OPER_AY_PI_32(void) {uint ea = EA_AY_PI_32(); return m68ki_read_32(ea);} //xxx
+INLINE uint OPER_AY_PD_8(void)  {uint ea = EA_AY_PD_8();  return m68ki_read_8(ea); } //xxx
+INLINE uint OPER_AY_PD_16(void) {uint ea = EA_AY_PD_16(); return m68ki_read_16(ea);} //xxx
+INLINE uint OPER_AY_PD_32(void) {uint ea = EA_AY_PD_32(); return m68ki_read_32(ea);} //xxx
+#else
+INLINE uint OPER_AY_PI_8(void)  {uint olday = AY; uint ea = EA_AY_PI_8();  uint v = m68ki_read_8(ea);  if (FAULT_PENDING) AY = olday; return v;} //xxx
+INLINE uint OPER_AY_PI_16(void) {uint olday = AY; uint ea = EA_AY_PI_16(); uint v = m68ki_read_16(ea); if (FAULT_PENDING) AY = olday; return v;} //xxx
+INLINE uint OPER_AY_PI_32(void) {uint olday = AY; uint ea = EA_AY_PI_32(); uint v = m68ki_read_32(ea); if (FAULT_PENDING) AY = olday; return v;} //xxx
+INLINE uint OPER_AY_PD_8(void)  {uint olday = AY; uint ea = EA_AY_PD_8();  uint v = m68ki_read_8(ea);  if (FAULT_PENDING) AY = olday; return v; } //xxx
+INLINE uint OPER_AY_PD_16(void) {uint olday = AY; uint ea = EA_AY_PD_16(); uint v = m68ki_read_16(ea); if (FAULT_PENDING) AY = olday; return v; } //xxx
+INLINE uint OPER_AY_PD_32(void) {uint olday = AY; uint ea = EA_AY_PD_32(); uint v = m68ki_read_32(ea); if (FAULT_PENDING) AY = olday; return v; } //xxx
+#endif
 INLINE uint OPER_AY_DI_8(void)  {uint ea = EA_AY_DI_8();  return m68ki_read_8(ea); }
 INLINE uint OPER_AY_DI_16(void) {uint ea = EA_AY_DI_16(); return m68ki_read_16(ea);}
 INLINE uint OPER_AY_DI_32(void) {uint ea = EA_AY_DI_32(); return m68ki_read_32(ea);}
@@ -1224,12 +1235,21 @@ INLINE uint OPER_AY_IX_32(void) {uint ea = EA_AY_IX_32(); return m68ki_read_32(e
 INLINE uint OPER_AX_AI_8(void)  {uint ea = EA_AX_AI_8();  return m68ki_read_8(ea); }
 INLINE uint OPER_AX_AI_16(void) {uint ea = EA_AX_AI_16(); return m68ki_read_16(ea);}
 INLINE uint OPER_AX_AI_32(void) {uint ea = EA_AX_AI_32(); return m68ki_read_32(ea);}
-INLINE uint OPER_AX_PI_8(void)  {uint ea = EA_AX_PI_8();  return m68ki_read_8(ea); }
-INLINE uint OPER_AX_PI_16(void) {uint ea = EA_AX_PI_16(); return m68ki_read_16(ea);}
-INLINE uint OPER_AX_PI_32(void) {uint ea = EA_AX_PI_32(); return m68ki_read_32(ea);}
-INLINE uint OPER_AX_PD_8(void)  {uint ea = EA_AX_PD_8();  return m68ki_read_8(ea); }
-INLINE uint OPER_AX_PD_16(void) {uint ea = EA_AX_PD_16(); return m68ki_read_16(ea);}
-INLINE uint OPER_AX_PD_32(void) {uint ea = EA_AX_PD_32(); return m68ki_read_32(ea);}
+#if 0
+INLINE uint OPER_AX_PI_8(void)  {uint ea = EA_AX_PI_8();  return m68ki_read_8(ea); } //xxx
+INLINE uint OPER_AX_PI_16(void) {uint ea = EA_AX_PI_16(); return m68ki_read_16(ea);} //xxx
+INLINE uint OPER_AX_PI_32(void) {uint ea = EA_AX_PI_32(); return m68ki_read_32(ea);} //xxx
+INLINE uint OPER_AX_PD_8(void)  {uint ea = EA_AX_PD_8();  return m68ki_read_8(ea); } //xxx
+INLINE uint OPER_AX_PD_16(void) {uint ea = EA_AX_PD_16(); return m68ki_read_16(ea);} //xxx
+INLINE uint OPER_AX_PD_32(void) {uint ea = EA_AX_PD_32(); return m68ki_read_32(ea);} //xxx
+#else
+INLINE uint OPER_AX_PI_8(void)  {uint oldax = AX; uint ea = EA_AX_PI_8();  uint v = m68ki_read_8(ea);  if (FAULT_PENDING) AX = oldax; return v; }
+INLINE uint OPER_AX_PI_16(void) {uint oldax = AX; uint ea = EA_AX_PI_16(); uint v = m68ki_read_16(ea); if (FAULT_PENDING) AX = oldax; return v; }
+INLINE uint OPER_AX_PI_32(void) {uint oldax = AX; uint ea = EA_AX_PI_32(); uint v = m68ki_read_32(ea); if (FAULT_PENDING) AX = oldax; return v; }
+INLINE uint OPER_AX_PD_8(void)  {uint oldax = AX; uint ea = EA_AX_PD_8();  uint v = m68ki_read_8(ea);  if (FAULT_PENDING) AX = oldax; return v; }
+INLINE uint OPER_AX_PD_16(void) {uint oldax = AX; uint ea = EA_AX_PD_16(); uint v = m68ki_read_16(ea); if (FAULT_PENDING) AX = oldax; return v; }
+INLINE uint OPER_AX_PD_32(void) {uint oldax = AX; uint ea = EA_AX_PD_32(); uint v = m68ki_read_32(ea); if (FAULT_PENDING) AX = oldax; return v; }
+#endif
 INLINE uint OPER_AX_DI_8(void)  {uint ea = EA_AX_DI_8();  return m68ki_read_8(ea); }
 INLINE uint OPER_AX_DI_16(void) {uint ea = EA_AX_DI_16(); return m68ki_read_16(ea);}
 INLINE uint OPER_AX_DI_32(void) {uint ea = EA_AX_DI_32(); return m68ki_read_32(ea);}
@@ -1237,8 +1257,13 @@ INLINE uint OPER_AX_IX_8(void)  {uint ea = EA_AX_IX_8();  return m68ki_read_8(ea
 INLINE uint OPER_AX_IX_16(void) {uint ea = EA_AX_IX_16(); return m68ki_read_16(ea);}
 INLINE uint OPER_AX_IX_32(void) {uint ea = EA_AX_IX_32(); return m68ki_read_32(ea);}
 
-INLINE uint OPER_A7_PI_8(void)  {uint ea = EA_A7_PI_8();  return m68ki_read_8(ea); }
-INLINE uint OPER_A7_PD_8(void)  {uint ea = EA_A7_PD_8();  return m68ki_read_8(ea); }
+#if 0
+INLINE uint OPER_A7_PI_8(void)  {uint ea = EA_A7_PI_8();  return m68ki_read_8(ea); } //xxx
+INLINE uint OPER_A7_PD_8(void)  {uint ea = EA_A7_PD_8();  return m68ki_read_8(ea); } //xxx
+#else
+INLINE uint OPER_A7_PI_8(void)  {uint olda7 = REG_A[7]; uint ea = EA_A7_PI_8();  uint v = m68ki_read_8(ea); if (FAULT_PENDING) REG_A[7] = olda7; return v; }
+INLINE uint OPER_A7_PD_8(void)  {uint olda7 = REG_A[7]; uint ea = EA_A7_PD_8();  uint v = m68ki_read_8(ea); if (FAULT_PENDING) REG_A[7] = olda7; return v; }
+#endif
 
 INLINE uint OPER_AW_8(void)     {uint ea = EA_AW_8();     return m68ki_read_8(ea); }
 INLINE uint OPER_AW_16(void)    {uint ea = EA_AW_16();    return m68ki_read_16(ea);}
@@ -1260,26 +1285,56 @@ INLINE uint OPER_PCIX_32(void)  {uint ea = EA_PCIX_32();  return m68ki_read_pcre
 /* Push/pull data from the stack */
 INLINE void m68ki_push_16(uint value)
 {
+#if 0
 	REG_SP = MASK_OUT_ABOVE_32(REG_SP - 2);
 	m68ki_write_16(REG_SP, value);
+#else
+	m68ki_write_16(REG_SP-2, value);
+	if (FAULT_NOT_PENDING) {
+		REG_SP = MASK_OUT_ABOVE_32(REG_SP - 2);
+	}
+#endif
 }
 
 INLINE void m68ki_push_32(uint value)
 {
+#if 0
 	REG_SP = MASK_OUT_ABOVE_32(REG_SP - 4);
 	m68ki_write_32(REG_SP, value);
+#else
+	m68ki_write_32(REG_SP-4, value);
+	if (FAULT_NOT_PENDING) {
+		REG_SP = MASK_OUT_ABOVE_32(REG_SP - 4);
+	}
+#endif
 }
 
 INLINE uint m68ki_pull_16(void)
 {
+#if 0
 	REG_SP = MASK_OUT_ABOVE_32(REG_SP + 2);
 	return m68ki_read_16(REG_SP-2);
+#else
+	uint sv = m68ki_read_16(REG_SP);
+	if (FAULT_NOT_PENDING) {
+		REG_SP = MASK_OUT_ABOVE_32(REG_SP + 2);
+	}
+	return sv;
+#endif
 }
 
 INLINE uint m68ki_pull_32(void)
 {
+#if 0
 	REG_SP = MASK_OUT_ABOVE_32(REG_SP + 4);
 	return m68ki_read_32(REG_SP-4);
+#else
+	uint sv = m68ki_read_32(REG_SP);
+	if (FAULT_NOT_PENDING) {
+		REG_SP = MASK_OUT_ABOVE_32(REG_SP + 4);
+	}
+	return sv;
+#endif
 }
 
 
@@ -1321,14 +1376,19 @@ INLINE void m68ki_jump(uint new_pc)
 
 INLINE void m68ki_jump_vector(uint vector)
 {
-printf("m68ki_jump_vector\n");
-m68ki_dump_state();
-printf("68k: vector 0x%x, old pc 0x%x (prev pc 0x%x), ", vector, REG_PC, REG_PPC);
+	{
+		extern int quiet;
+		if (!quiet) {
+			printf("m68ki_jump_vector (inline)\n");
+			m68ki_dump_state();
+			printf("68k: vector 0x%x, old pc 0x%x (prev pc 0x%x), ", vector, REG_PC, REG_PPC);
+		}
+	}
 	REG_PC = (vector<<2) + REG_VBR;
-printf("fetch 0x%x, ", vector, REG_PC);
+{ extern int quiet; if (!quiet) printf("fetch 0x%x (%x), ", vector, REG_PC); }
 //	REG_PC = m68ki_read_data_32(REG_PC);
 	REG_PC = m68ki_read_program_32(REG_PC);
-printf("new pc 0x%x\n", REG_PC);
+{ extern int quiet; if (!quiet) printf("new pc 0x%x\n", REG_PC); }
 	m68ki_pc_changed(REG_PC);
 #if 0
 	if (vector == 0x20) enable_trace(1);
@@ -1416,6 +1476,7 @@ INLINE void m68ki_set_sr_noint(uint value)
 /* Set the status register and check for interrupts */
 INLINE void m68ki_set_sr(uint value)
 {
+//printf("m68ki_set_sr(%x) %x %x \n", value, CPU_INT_LEVEL, FLAG_INT_MASK);
 	m68ki_set_sr_noint(value);
 	m68ki_check_interrupts();
 }
@@ -1734,6 +1795,7 @@ INLINE void m68ki_exception_trace(void)
 
 	m68ki_jump_vector(EXCEPTION_TRACE);
 
+if (CPU_STOPPED && (CPU_STOPPED & ~STOP_LEVEL_STOP) == 0) printf("CPU UNSTOPPED!\n");
 	/* Trace nullifies a STOP instruction */
 	CPU_STOPPED &= ~STOP_LEVEL_STOP;
 
@@ -1831,12 +1893,16 @@ void m68ki_exception_interrupt(uint int_level)
 	uint sr;
 	uint new_pc;
 
+if (CPU_STOPPED && (CPU_STOPPED & ~STOP_LEVEL_STOP) == 0) printf("CPU UNSTOPPED!\n");
+
 	/* Turn off the stopped state */
 	CPU_STOPPED &= ~STOP_LEVEL_STOP;
 
 	/* If we are halted, don't do anything */
-	if(CPU_STOPPED)
+	if(CPU_STOPPED) {
+ printf("m68ki_exception_interrupt() stopped and int %d\n", int_level);
 		return;
+	}
 
 	/* Acknowledge the interrupt */
 	vector = m68ki_int_ack(int_level);

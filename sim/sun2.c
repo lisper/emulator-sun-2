@@ -165,26 +165,37 @@ void sdl_poll(void)
   }
 }
 
+void sun2_fb_alloc(void)
+{
+  if (fbmem == NULL) {
+    fbmem = malloc(128*1024);
+    memset(fbmem, 0, 128*1024);
+    sdl_init();
+  }
+}
+
 unsigned int sun2_video_read(unsigned int address, int size)
 {
   unsigned int *p32;
   unsigned short *p16;
   unsigned char *p08;
+  unsigned offset;
 
-  if (fbmem == NULL) {
-    fbmem = malloc(130*1024);
-    memset(fbmem, 0, 130*1024);
-    sdl_init();
-  }
+  sun2_fb_alloc();
+
+  offset = address & 0xfffff;
+  if (offset >= 128*1024)
+    return 0xffffffff;
+
   switch (size) {
   case 1:
-    p08 = (unsigned char *)(fbmem + (address & 0xfffff));
+    p08 = (unsigned char *)(fbmem + offset);
     return *p08;
   case 2:
-    p08 = (unsigned char *)(fbmem + (address & 0xfffff));
+    p08 = (unsigned char *)(fbmem + offset);
     return (p08[0] << 8) | p08[1];
   case 4:
-    p08 = (unsigned char *)(fbmem + (address & 0xfffff));
+    p08 = (unsigned char *)(fbmem + offset);
     return (p08[0] << 24) | (p08[1] << 16) | (p08[2] << 8) | p08[3];
   default:
     return 0x0;
@@ -196,11 +207,14 @@ unsigned int sun2_video_write(unsigned int address, int size, unsigned int value
   unsigned int *p32;
   unsigned short *p16;
   unsigned char *p08;
+  unsigned offset;
 
-  if (fbmem == NULL) {
-    fbmem = malloc(32*1024);
-    sdl_init();
-  }
+  sun2_fb_alloc();
+
+  offset = address & 0xfffff;
+  if (offset >= 128*1024)
+    return;
+
   switch (size) {
   case 1:
     p08 = (unsigned char *)(fbmem + (address & 0xfffff));
@@ -298,6 +312,7 @@ void sun2_sdl_key(int sdl_code, int modifiers, unsigned int unicode, int down)
 //    return;
 //  }
 
+#if 0
   if (sdl_code == SDLK_SLASH && down) {
     extern unsigned char g_ram[];
     unsigned char *p = g_ram;
@@ -306,21 +321,33 @@ void sun2_sdl_key(int sdl_code, int modifiers, unsigned int unicode, int down)
     printf("8: %02x%02x%02x%02x\n", p[0], p[1], p[2], p[3]); p += 4;
     printf("c: %02x%02x%02x%02x\n", p[0], p[1], p[2], p[3]);
   }
+#endif
 
+#if 1
   if (sdl_code == SDLK_QUOTE & down) {
     extern int trace_armed;
-    trace_armed = 1;
-    printf("TRACE ARMED!\n");
+    if (trace_armed == 0) {
+      trace_armed = 1;
+      printf("TRACE ARMED!\n");
+    } else {
+      trace_armed = 0;
+      printf("TRACE unarmed!\n");
+    }
   }
+#endif
 
+#if 0
   if (sdl_code == SDLK_SEMICOLON & down) {
     toggle_trace = !toggle_trace;
     if (toggle_trace) {
+      printf("TRACE ENABLED!\n");
       enable_trace(1);
     } else {
+      printf("TRACE DISABLED!\n");
       enable_trace(0);
     }
   }
+#endif
 
   scc_in_push(3, mapped);
 }

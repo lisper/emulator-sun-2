@@ -1316,7 +1316,7 @@ static void d68020_cmpi_pcix_8(void)
 static void d68000_cmpi_16(void)
 {
 	char* str;
-	LIMIT_CPU_TYPES(M68020_PLUS);
+//	LIMIT_CPU_TYPES(M68020_PLUS);
 	str = get_imm_str_s16();
 	sprintf(g_dasm_str, "cmpi.w  %s, %s", str, get_ea_mode_str_16(g_cpu_ir));
 }
@@ -1340,7 +1340,7 @@ static void d68020_cmpi_pcix_16(void)
 static void d68000_cmpi_32(void)
 {
 	char* str;
-	LIMIT_CPU_TYPES(M68020_PLUS);
+//	LIMIT_CPU_TYPES(M68020_PLUS);
 	str = get_imm_str_s32();
 	sprintf(g_dasm_str, "cmpi.l  %s, %s", str, get_ea_mode_str_32(g_cpu_ir));
 }

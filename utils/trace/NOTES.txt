@@ -1,0 +1,8 @@
+trace.bin.1 - 19941297 - 19985376
+trace.bin - 19941301
+
+trace2.bin appears to be sunos2.0 using tme
+./tdump -f /net/mini/disk/files1/sun2/brad/trace2.bin  -d 1 -m 300000000 >zz 
+
+trace.bin.1 appears to be sunos2.0 using sim
+./tdump -f ../trace.bin.1 -d 1 -m 30000000 > yy

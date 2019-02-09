@@ -69,6 +69,18 @@
  */
 #define M68K_SEPARATE_READS         OPT_OFF
 
+/* If ON, the CPU will call m68k_read_immediate_xx() for immediate addressing
+ * and m68k_read_pcrelative_xx() for PC-relative addressing.
+ * If off, all read requests from the CPU will be redirected to m68k_read_xx()
+ */
+#define M68K_SEPARATE_READS         OPT_OFF
+
+/* If ON, the CPU will call m68k_write_32_pd() when it executes move.l with a
+ * predecrement destination EA mode instead of m68k_write_32().
+ * To simulate real 68k behavior, m68k_write_32_pd() must first write the high
+ * word to [address+2], and then write the low word to [address].
+ */
+#define M68K_SIMULATE_PD_WRITES     OPT_OFF
 
 /* If on, CPU will call the interrupt acknowledge callback when it services an
  * interrupt.
@@ -88,7 +100,7 @@
 
 /* If on, the CPU will monitor the trace flags and take trace exceptions
  */
-#define M68K_EMULATE_TRACE          OPT_OFF
+#define M68K_EMULATE_TRACE          OPT_ON
 
 
 /* If on, CPU will call the output reset callback when it encounters a reset
@@ -182,10 +194,11 @@
 //#define m68k_read_memory_16(A) cpu_read_word(A)
  //#define m68k_read_memory_32(A) cpu_read_long(A)
 
- //#define m68k_write_memory_8(A, V) cpu_write_byte(A, V)
- //#define m68k_write_memory_16(A, V) cpu_write_word(A, V)
- //#define m68k_write_memory_32(A, V) cpu_write_long(A, V)
+//#define m68k_write_memory_8(A, V) cpu_write_byte(A, V)
+//#define m68k_write_memory_16(A, V) cpu_write_word(A, V)
+//#define m68k_write_memory_32(A, V) cpu_write_long(A, V)
 
+#ifdef M68K_V33
 #define m68k_read_memory_8(A) cpu_read(1, A)
 #define m68k_read_memory_16(A) cpu_read(2, A)
 #define m68k_read_memory_32(A) cpu_read(4, A)
@@ -193,7 +206,7 @@
 #define m68k_write_memory_8(A, V) cpu_write(1, A, V)
 #define m68k_write_memory_16(A, V) cpu_write(2, A, V)
 #define m68k_write_memory_32(A, V) cpu_write(4, A, V)
-
+#endif
 
 /* ======================================================================== */
 /* ============================== END OF FILE ============================= */

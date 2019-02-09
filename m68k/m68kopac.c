@@ -43,7 +43,7 @@ void m68k_op_abcd_8_rr(void)
 void m68k_op_abcd_8_mm_ax7(void)
 {
 	uint src = OPER_AY_PD_8();
-	uint ea  = EA_A7_PD_8();
+	uint ea  = EA_A7_PD_8(); //xxx
 	uint dst = m68ki_read_8(ea);
 	uint res = LOW_NIBBLE(src) + LOW_NIBBLE(dst) + XFLAG_AS_1();
 
@@ -66,7 +66,7 @@ void m68k_op_abcd_8_mm_ax7(void)
 void m68k_op_abcd_8_mm_ay7(void)
 {
 	uint src = OPER_A7_PD_8();
-	uint ea  = EA_AX_PD_8();
+	uint ea  = EA_AX_PD_8(); //xxx
 	uint dst = m68ki_read_8(ea);
 	uint res = LOW_NIBBLE(src) + LOW_NIBBLE(dst) + XFLAG_AS_1();
 
@@ -89,7 +89,7 @@ void m68k_op_abcd_8_mm_ay7(void)
 void m68k_op_abcd_8_mm_axy7(void)
 {
 	uint src = OPER_A7_PD_8();
-	uint ea  = EA_A7_PD_8();
+	uint ea  = EA_A7_PD_8(); //xxx
 	uint dst = m68ki_read_8(ea);
 	uint res = LOW_NIBBLE(src) + LOW_NIBBLE(dst) + XFLAG_AS_1();
 
@@ -112,7 +112,7 @@ void m68k_op_abcd_8_mm_axy7(void)
 void m68k_op_abcd_8_mm(void)
 {
 	uint src = OPER_AY_PD_8();
-	uint ea  = EA_AX_PD_8();
+	uint ea  = EA_AX_PD_8(); //xxx
 	uint dst = m68ki_read_8(ea);
 	uint res = LOW_NIBBLE(src) + LOW_NIBBLE(dst) + XFLAG_AS_1();
 
@@ -2196,7 +2196,7 @@ void m68k_op_addx_32_rr(void)
 void m68k_op_addx_8_mm_ax7(void)
 {
 	uint src = OPER_AY_PD_8();
-	uint ea  = EA_A7_PD_8();
+	uint ea  = EA_A7_PD_8(); //xxx
 	uint dst = m68ki_read_8(ea);
 	uint res = src + dst + XFLAG_AS_1();
 
@@ -2214,7 +2214,7 @@ void m68k_op_addx_8_mm_ax7(void)
 void m68k_op_addx_8_mm_ay7(void)
 {
 	uint src = OPER_A7_PD_8();
-	uint ea  = EA_AX_PD_8();
+	uint ea  = EA_AX_PD_8(); //xxx
 	uint dst = m68ki_read_8(ea);
 	uint res = src + dst + XFLAG_AS_1();
 
@@ -2232,7 +2232,7 @@ void m68k_op_addx_8_mm_ay7(void)
 void m68k_op_addx_8_mm_axy7(void)
 {
 	uint src = OPER_A7_PD_8();
-	uint ea  = EA_A7_PD_8();
+	uint ea  = EA_A7_PD_8(); //xxx
 	uint dst = m68ki_read_8(ea);
 	uint res = src + dst + XFLAG_AS_1();
 
@@ -2250,7 +2250,7 @@ void m68k_op_addx_8_mm_axy7(void)
 void m68k_op_addx_8_mm(void)
 {
 	uint src = OPER_AY_PD_8();
-	uint ea  = EA_AX_PD_8();
+	uint ea  = EA_AX_PD_8(); //xxx
 	uint dst = m68ki_read_8(ea);
 	uint res = src + dst + XFLAG_AS_1();
 
@@ -2268,7 +2268,7 @@ void m68k_op_addx_8_mm(void)
 void m68k_op_addx_16_mm(void)
 {
 	uint src = OPER_AY_PD_16();
-	uint ea  = EA_AX_PD_16();
+	uint ea  = EA_AX_PD_16(); //xxx
 	uint dst = m68ki_read_16(ea);
 	uint res = src + dst + XFLAG_AS_1();
 
@@ -2286,7 +2286,7 @@ void m68k_op_addx_16_mm(void)
 void m68k_op_addx_32_mm(void)
 {
 	uint src = OPER_AY_PD_32();
-	uint ea  = EA_AX_PD_32();
+	uint ea  = EA_AX_PD_32(); //xxx
 	uint dst = m68ki_read_32(ea);
 	uint res = src + dst + XFLAG_AS_1();
 

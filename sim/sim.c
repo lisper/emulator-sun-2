@@ -35,6 +35,7 @@ char kernel_filename[1024];
 char eprom_filename[1024];
 char disk_filename[1024];
 char tape_filename[1024];
+int quiet;
 
 struct a_out_hdr_s {
   unsigned long a_info;	/* Use macros N_MAGIC, etc for access.  */
@@ -143,12 +144,13 @@ setup_disk(char *df)
 {
   strcpy(disk_filename, df);
   printf("disk: %s\n", disk_filename);
-  scsi_set_disk_image(0, disk_filename);
+  if (scsi_set_disk_image(0, disk_filename))
+    return -1;
   return 0;
 }
 
 int
-tapesort_compare(void *a, void *b)
+tapesort_compare(const void *a, const void *b)
 {
   return strcmp(* (char * const *)a, * (char * const *)b);
 }
@@ -170,7 +172,7 @@ setup_tape(char *tf)
 
   if (dir) {
     while ((d = readdir(dir))) {
-      if (d->d_type == DT_REG) {
+      if (d->d_type == DT_REG || d->d_type == DT_LNK) {
 	/* only take tape files named "xx" where "xx" is two digits */
 	if (strlen(d->d_name) == 2 && isdigit(d->d_name[0])) {
 	  tapefilename[n++] = strdup(d->d_name);
@@ -185,7 +187,10 @@ setup_tape(char *tf)
   for (i = 0; i < n; i++) {
     sprintf(filename, "%s/%s", tape_filename, tapefilename[i]);
     printf("tape: file%d %s\n", i, filename);
-    scsi_set_tape_image(4, i, filename);
+    if (scsi_set_tape_image(4, i, filename)) {
+      printf("tape: can't setup tape image %s\n", filename);
+      return -1;
+    }
   }
 
 /*
@@ -246,7 +251,7 @@ main(int argc, char **argv)
       {0,        0,                 0,  0 }
     };
 
-    c = getopt_long(argc, argv, "d:k:p:t:", long_options, &option_index);
+    c = getopt_long(argc, argv, "d:k:p:t:q", long_options, &option_index);
     if (c == -1)
       break;
 
@@ -280,6 +285,10 @@ main(int argc, char **argv)
       boot_arg = strdup(optarg);
       break;
 
+    case 'q':
+      quiet++;
+      break;
+
     case '?':
       usage();
       break;
@@ -307,8 +316,12 @@ main(int argc, char **argv)
       usage();
 
     setup_eeprom(prom_arg);
-    setup_disk(disk_arg);
-    setup_tape(tape_arg);
+
+    if (setup_disk(disk_arg))
+      exit(1);
+
+    if (setup_tape(tape_arg))
+      exit(1);
   }
 
   sim68k();

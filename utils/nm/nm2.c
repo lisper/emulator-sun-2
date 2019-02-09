@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <fcntl.h>
+
+#include "../../m68k/m68k.h"
 
 struct exec {
 	unsigned char a_vers;
@@ -23,8 +26,9 @@ struct nlist {
 	unsigned n_value;
 };
 
-int debug = 1;
-unsigned char f[1024*512];
+int debug = 0;
+int disasm = 0;
+unsigned char f[1024*1024];
 
 void dumpbuffer(char *buf, int len)
 {
@@ -91,11 +95,18 @@ void sort_syms(void)
 
 char map_type(int t)
 {
-	if (t == 0) return 'U';
-	if (t == 2) return 'a';
-	if (t == 4) return 't';
-	if (t == 6) return 'd';
-	if (t == 8) return 'b';
+	switch (t) {
+	case 0: return 'U';
+	case 2: return 'a';
+	case 3: return 'A';
+	case 4: return 't';
+	case 5: return 'T';
+	case 6: return 'd';
+	case 7: return 'D';
+	case 8: return 'b';
+	case 9: return 'B';
+	}
+	return '?';
 }
 
 void print_syms(void)
@@ -109,22 +120,39 @@ void print_syms(void)
 	}
 }
 
-main()
+unsigned int n_txtoff, n_datoff, n_treloff, n_dreloff, n_symoff, n_stroff;
+struct nlist *nl;
+
+int read_aout(const char *fname)
 {
-	int r;
+	int r, fd;
 	struct exec *eh;
-	unsigned int n_txtoff, n_datoff, n_treloff, n_dreloff, n_symoff, n_stroff;
-	struct nlist *nl;
 	int i, nls;
 	char *s;
 
-	r = read(0, f, sizeof(f));
+	fd = open(fname, O_RDONLY);
+	if (fd < 0) {
+		perror(fname);
+		exit(2);
+	}
+
+	r = read(fd, f, sizeof(f));
+	close(fd);
+
+	if (r < sizeof(struct exec)) {
+		fprintf(stderr, "short read?");
+		exit(3);
+	}
+
 	eh = (struct exec *)f;
 
-	printf("file bytes %d\n", r);
-	printf("magic %o\n", ntohs(eh->a_magic));
+	if (debug) {
+		printf("file bytes %d\n", r);
+		printf("magic    %o\n", ntohs(eh->a_magic));
+		printf("machtype %o\n", ntohs(eh->a_machtype));
+	}
 
-	n_txtoff  = 0x800/*0*/;
+	n_txtoff  = eh->a_machtype == 0 ? 0x800 : 0x20;
 	n_datoff  = n_txtoff  + ntohl(eh->a_text);
 	n_treloff = n_datoff  + ntohl(eh->a_data);
 	n_dreloff = n_treloff + ntohl(eh->a_trsize);
@@ -164,16 +192,178 @@ main()
 		stroff = htonl(nl->n_strx);
 		s = &f[ n_stroff + stroff ];
 		if (debug) printf("%08x x %s\n", htonl(nl->n_value), s);
-		add_sym(htonl(nl->n_value), s, nl->n_type, htons(nl->n_desc));
+		if (nl->n_type & 0xe0)
+			;
+		else
+			add_sym(htonl(nl->n_value), s, nl->n_type, htons(nl->n_desc));
 
 		nl++;
 		nls -= 12;
 	}
 
 	if (debug) printf("---------\n");
+}
 
+unsigned int m68k_read_disassembler_16(unsigned int address)
+{
+	int offset = address - 0x4000;
+	unsigned char *s = &f[n_txtoff];
+
+	return (s[offset] << 8) | s[offset+1];
+}
+
+unsigned did_read32;
+
+unsigned int m68k_read_disassembler_32(unsigned int address)
+{
+	did_read32 = address;
+	return (m68k_read_disassembler_16(address) << 16) |
+		m68k_read_disassembler_16(address+2);
+}
+
+int lookup_sym(unsigned int v, char **psym, int *poffset)
+{
+	int offset, i;
+
+	offset = 0;
+	for (i = 0; i < sym_count; i++) {
+		if ((syms[i].t & 1) == 0)
+			continue;
+		if (v == syms[i].v)
+			break;
+		if (syms[i].v > v) {
+			i--;
+			offset = v - syms[i].v;
+			break;
+		}
+	}
+
+	if (i >= sym_count)
+		return 0;
+
+	*psym = syms[i].sym;
+	*poffset = offset;
+	return 1;
+}
+
+void disassemble(void)
+{
+	unsigned char *s, *e;
+	unsigned pc;
+	s = &f[n_txtoff];
+	e = &f[n_datoff];
+
+	pc = 0x4000;
+	while (s < e) {
+		unsigned short w, last_w;
+		int i, offset;
+		char *sym;
+
+		w = (s[0] << 8) | s[1];
+
+		if (lookup_sym(pc, &sym, &offset)) {
+			if (offset == 0) {
+				printf("%s:\n", sym);
+			}
+		}
+
+		if (0) {
+			printf(" %08x: %04x\n", pc, w);
+			s += 2;
+			pc += 2;
+		} else {
+			char buf[256];
+			int b;
+
+			if (last_w == 0x4e75 && w == 0) {
+				printf(" %08x: %04x\n", pc, w);
+				s += 2;
+				pc += 2;
+			} else {
+				char comment[128];
+				comment[0] = 0;
+
+#if 0
+2a79
+267c
+
+4ab8
+4ab9
+
+5ab8
+b0b8
+dfb8
+
+2038
+2039
+2078
+2f38
+2f39
+
+0cab
+04ab
+#endif
+				if (w == 0x4eb9) {
+					unsigned l = m68k_read_disassembler_32(pc+2);
+					if (lookup_sym(l, &sym, &offset))
+						;
+					if (offset == 0)
+						sprintf(comment, "\t; %s", sym);
+					else
+						sprintf(comment, "\t; %s+0x%x", sym, offset);
+				}
+
+				did_read32 = 0;
+				b = m68k_disassemble(buf, pc, M68K_CPU_TYPE_68010); 
+				if (did_read32) {
+					unsigned l = m68k_read_disassembler_32(pc+2);
+					if (l > 0x2000 && lookup_sym(l, &sym, &offset)) {
+						if (offset == 0)
+							sprintf(comment, "\t; %s", sym);
+						else
+							sprintf(comment, "\t; %s+0x%x", sym, offset);
+					}
+				}
+				printf(" %08x: %04x %s%s\n", pc, w, buf, comment);
+				s += b;
+				pc += b;
+			}
+			last_w = w;
+		}
+	}
+}
+
+void usage(void)
+{
+	fprintf(stderr, "\n");
+	exit(1);
+}
+
+main(int argc, char *argv[])
+{
+	int i;
+	char *fname = NULL;
+
+	if (argc < 2) 
+		usage();
+
+	for (i = 1; i < argc; i++) {
+		if (argv[i][0] == '-') {
+			switch (argv[i][1]) {
+			case 'd': debug++; break;
+			case 'D': disasm++; break;
+			}
+		} else
+			fname = argv[i];
+	}
+
+	read_aout(fname);
 	sort_syms();
-	print_syms();
+
+	if (disasm)
+		disassemble();
+	else
+		print_syms();
 
 	exit(0);
 }

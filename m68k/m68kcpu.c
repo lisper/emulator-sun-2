@@ -637,10 +637,20 @@ void m68k_set_cpu_type(unsigned int cpu_type)
 	}
 }
 
+static uint  save_regs[16];
+
 /* Execute some instructions until we use up num_cycles clock cycles */
 /* ASG: removed per-instruction interrupt checks */
 int m68k_execute(int num_cycles)
 {
+#if 1
+	{
+		int i;
+		for (i = 0; i < 16; i++) {
+			save_regs[i] = m68ki_cpu.dar[i];
+		}
+	}
+#endif
 	/* Make sure we're not stopped */
 	if(!CPU_STOPPED)
 	{
@@ -676,7 +686,14 @@ int m68k_execute(int num_cycles)
 			USE_CYCLES(CYC_INSTRUCTION[REG_IR]);
 
 			/* Trace m68k_exception, if necessary */
+#if M68K_EMULATE_FC
+			if (!m68ki_fault_pending)
+				m68ki_exception_if_trace(); /* auto-disable (see m68kcpu.h) */
+			else
+				m68ki_clear_trace();
+#else
 			m68ki_exception_if_trace(); /* auto-disable (see m68kcpu.h) */
+#endif
 		} while(GET_CYCLES() > 0);
 
 		/* set previous PC to current PC for the next entry into the loop */
@@ -685,6 +702,21 @@ int m68k_execute(int num_cycles)
 		/* ASG: update cycles */
 		USE_CYCLES(CPU_INT_CYCLES);
 		CPU_INT_CYCLES = 0;
+
+#if 1
+		if (m68ki_fault_pending) {
+			int i;
+			for (i = 0; i < 16; i++) {
+				if (m68ki_cpu.dar[i] != save_regs[i]) {
+					printf("fault: ");
+					if (i < 8) printf("D%d", i); else printf("A%d", i-8);
+					printf(" changed; old %08x new %08x\n", save_regs[i], m68ki_cpu.dar[i]);
+					// fix
+					m68ki_cpu.dar[i] = save_regs[i];
+				}
+			}
+		}
+#endif
 
 		/* return how many clocks we used */
 		return m68ki_initial_cycles - GET_CYCLES();
@@ -732,10 +764,6 @@ void m68k_set_irq(unsigned int int_level)
 	uint old_level = CPU_INT_LEVEL;
 	CPU_INT_LEVEL = int_level << 8;
 
-#if 0
-	printf("xxx: m68k_set_irq(%d), old_level %x CPU_INT_LEVEL %x, FLAG_INT_MASK %x\n", 
-	       int_level, old_level, CPU_INT_LEVEL, FLAG_INT_MASK);
-#endif
 	/* A transition from < 7 to 7 always interrupts (NMI) */
 	/* Note: Level 7 can also level trigger like a normal IRQ */
 	if(old_level != 0x0700 && CPU_INT_LEVEL == 0x0700)
@@ -764,21 +792,33 @@ void m68k_mark_buserr(void)
 	m68ki_fault_sr = cpu->t1_flag;
 }
 
+void m68k_mark_buserr_fixup(unsigned access_address, int access_size)
+{
+	m68ki_fault_address = access_address;
+	m68ki_fault_size = access_size;
+}
+
 void m68k_set_buserr(uint pc)
 {
 	m68ki_cpu_core* cpu = &m68ki_cpu;
 	int i;
 
-//	m68ki_access_pc = pc; /* hack - we need to better state when buserr occurs */
+#if 0 // don't do this - it will undo the per-instruction fault rollbacks
 	// roll back the state
 	for (i = 0; i < 16; i++) {
 		cpu->dar[i] = m68ki_fault_regs[i];
 	}
+#endif
 	cpu->t1_flag = m68ki_fault_sr;
 
 #if 1
-	printf("m68k_set_buserr\n");
-	m68ki_dump_state();
+	{
+		extern int quiet;
+		if (!quiet) {
+			printf("m68k_set_buserr\n");
+			m68ki_dump_state();
+		}
+	}
 #endif
 
 	m68ki_exception_buserr();
@@ -955,14 +995,17 @@ void m68k_load_context(unsigned int (*load_value)(char*))
 
 void m68ki_dump_state(void)
 {
-  printf("PC %06x sr %04x usp %06x isp %06x msp %06x sp %06x vbr %06x\n",
+  extern unsigned long g_isn_count;
+
+  printf("PC %06x sr %04x usp %06x isp %06x msp %06x sp %06x vbr %06x (isn %lu)\n",
 	 (unsigned int)REG_PC,
 	 (unsigned int)m68k_get_reg(NULL, M68K_REG_SR),
 	 (unsigned int)REG_USP,
 	 (unsigned int)REG_ISP,
 	 (unsigned int)REG_MSP,
 	 (unsigned int)REG_SP,
-	 (unsigned int)REG_VBR);
+	 (unsigned int)REG_VBR,
+	 g_isn_count);
 
   printf("A0:%08x A1:%08x A2:%08x A3:%08x A4:%08x A5:%08x A6:%08x A7:%08x\n",
 	 m68k_get_reg(NULL, M68K_REG_A0), m68k_get_reg(NULL, M68K_REG_A1),

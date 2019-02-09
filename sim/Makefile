@@ -1,11 +1,15 @@
 
-OBJ = sim.o sim68k.o sun2.o scc.o am9513.o sc.o scsi.o utils.o \
+OBJ = sim.o sim68k.o sun2.o scc.o am9513.o mm58167.o sc.o scsi.o utils.o \
 	m68kcpu.o m68kops.o m68kopac.o m68kopdm.o m68kopnz.o m68kdasm.o 
 
-CFLAGS = -I. -I../m68k -g -O2
+M68K_SRC = ../m68k
+DEFS = -DM68K_V33
+#M68K_SRC = ../m68k-3.4
+
+CFLAGS = -I. -I$(M68K_SRC) -g -O2 $(DEFS)
 LIBS = -lSDL -lpthread
 
-all: sim rc
+all: sim 
 
 sim: $(OBJ) 
 	$(CC) -o sim $(OBJ) $(LIBS)
@@ -19,28 +23,25 @@ sim68k.o: sim68k.c
 sun2.o: sun2.c
 	$(CC) -c $(CFLAGS) $<
 
-m68kcpu.o: ../m68k/m68kcpu.c ../m68k/m68kops.h ../m68k/m68kcpu.h
+m68kcpu.o: $(M68K_SRC)/m68kcpu.c $(M68K_SRC)/m68kops.h $(M68K_SRC)/m68kcpu.h
 	$(CC) -c $(CFLAGS) -o $@ $<
 
-m68kops.o: ../m68k/m68kmake ../m68k/m68kops.h ../m68k/m68kops.c
-	$(CC) -c $(CFLAGS) ../m68k/m68kops.c -o m68kops.o
+m68kops.o: $(M68K_SRC)/m68kmake $(M68K_SRC)/m68kops.h $(M68K_SRC)/m68kops.c
+	$(CC) -c $(CFLAGS) $(M68K_SRC)/m68kops.c -o m68kops.o
 
-m68kopac.o: ../m68k/m68kmake ../m68k/m68kops.h ../m68k/m68kopac.c
-	$(CC) -c $(CFLAGS) ../m68k/m68kopac.c -o m68kopac.o
+m68kopac.o: $(M68K_SRC)/m68kmake $(M68K_SRC)/m68kops.h $(M68K_SRC)/m68kopac.c
+	$(CC) -c $(CFLAGS) $(M68K_SRC)/m68kopac.c -o m68kopac.o
 
-m68kopdm.o: ../m68k/m68kmake ../m68k/m68kops.h ../m68k/m68kopdm.c
-	$(CC) -c $(CFLAGS) ../m68k/m68kopdm.c -o m68kopdm.o
+m68kopdm.o: $(M68K_SRC)/m68kmake $(M68K_SRC)/m68kops.h $(M68K_SRC)/m68kopdm.c
+	$(CC) -c $(CFLAGS) $(M68K_SRC)/m68kopdm.c -o m68kopdm.o
 
-m68kopnz.o: ../m68k/m68kmake ../m68k/m68kops.h ../m68k/m68kopnz.c
-	$(CC) -c $(CFLAGS) ../m68k/m68kopnz.c -o m68kopnz.o
+m68kopnz.o: $(M68K_SRC)/m68kmake $(M68K_SRC)/m68kops.h $(M68K_SRC)/m68kopnz.c
+	$(CC) -c $(CFLAGS) $(M68K_SRC)/m68kopnz.c -o m68kopnz.o
 
-m68kdasm.o: ../m68k/m68kdasm.c
+m68kdasm.o: $(M68K_SRC)/m68kdasm.c
 	$(CC) -c $(CFLAGS) -o $@ $<
-
-rc: rc.c
-	cc -o rc -O2 rc.c
 
 clean:
 	rm -f *.o
-	rm -f rc
+	rm -f sim
 

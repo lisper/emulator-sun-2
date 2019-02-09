@@ -5,6 +5,8 @@
 #include "scsi.h"
 
 extern int trace_scsi;
+extern int trace_sc;
+extern int trace_armed;
 
 int scsi_bus_phase;
 unsigned int scsi_bus_state;
@@ -36,6 +38,26 @@ struct scsi_unit_s {
   unsigned char data[512*MAX_SCSI_BLOCKS];
 } scsi_units[8];
 
+int _scsi_test_unit_ready(int id, unsigned char *cmd, int cmd_size, unsigned char **pbuf, int *psiz)
+{
+  struct scsi_unit_s *u;
+  int ret;
+  off_t offset;
+  int xfer_size;
+
+  u = &scsi_units[id];
+
+  printf("_scsi_test_unit_ready(id=%d)\n", id);
+
+  xfer_size = 16;
+  memset(&u->data, 0, 512);
+
+  *pbuf = u->data;
+  *psiz = xfer_size;
+
+  return 0;
+}
+
 int _scsi_inquiry(int id, unsigned char *cmd, int cmd_size, unsigned char **pbuf, int *psiz)
 {
   struct scsi_unit_s *u;
@@ -47,14 +69,76 @@ int _scsi_inquiry(int id, unsigned char *cmd, int cmd_size, unsigned char **pbuf
   spagecode = (cmd[2] << 8) | cmd[3];
   sallocationlen = (cmd[3] << 8) | cmd[4];
 
-  printf("_scsi_inquiry() spagecode %x, sallocationlen %x\n", spagecode, sallocationlen);
+  printf("_scsi_inquiry(id=%d) spagecode %x, sallocationlen %x\n", id, spagecode, sallocationlen);
 
   xfer_size = 96;
   memset(&u->data, 0, 512);
 
   /* tape? */
-  if (u->tape)
+  if (u->tape) {
+    printf("_scsi_inquiry() tape\n");
     u->data[0] = 0x01;
+  }
+
+  *pbuf = u->data;
+  *psiz = xfer_size;
+
+  return 0;
+}
+
+int _scsi_mode_select(int id, unsigned char *cmd, int cmd_size, unsigned char **pbuf, int *psiz)
+{
+  struct scsi_unit_s *u;
+  int xfer_size;
+
+  u = &scsi_units[id];
+
+  xfer_size = 8;
+  memset(&u->data, 0, 512);
+
+  /* tape? */
+  if (u->tape) {
+    printf("_scsi_mode_select() tape\n");
+  }
+
+  *pbuf = u->data;
+  *psiz = xfer_size;
+
+  return 0;
+}
+
+int _scsi_mode_sense(int id, unsigned char *cmd, int cmd_size, unsigned char **pbuf, int *psiz)
+{
+  struct scsi_unit_s *u;
+  int ret;
+  off_t offset;
+  int pc, pagecode, spagecode, allocationlen, xfer_size;
+
+  u = &scsi_units[id];
+  pc = (cmd[2] & 0xc0) >> 6;
+  pagecode = cmd[2] & 0x3f;
+  spagecode = cmd[3];
+  allocationlen = cmd[4];
+
+  printf("_scsi_mode_sense(id=%d) pc %x pagecode %x spagecode %x, allocationlen %x\n", id, pc, pagecode, spagecode, allocationlen);
+
+  xfer_size = 96;
+  memset(&u->data, 0, 512);
+
+  // data len
+  // medium type
+  // dev spec
+  // blk desc len
+  // density
+  // nblocks[3];
+  // reserved
+  // blklen[3]
+
+  /* tape? */
+  if (u->tape) {
+    printf("_scsi_mode_sense() tape\n");
+//    u->data[0] = 0x01;
+  }
 
   *pbuf = u->data;
   *psiz = xfer_size;
@@ -70,11 +154,11 @@ int _scsi_read_block(int id, unsigned char *cmd, int cmd_size, unsigned char **p
   int sblock, scount, xfer_size;
 
   u = &scsi_units[id];
-  sblock = (cmd[2] << 8) | cmd[3];
+  sblock = ((cmd[1] & 0x1f) << 16) | (cmd[2] << 8) | cmd[3];
   scount = cmd[4];
 
   if (trace_scsi)
-    printf("_scsi_read_block(id=%d) sblock %x, slen %x\n", id, sblock, scount);
+    printf("_scsi_read_block(id=%d) sblock 0x%x, slen 0x%x\n", id, sblock, scount);
 
   if (scount > MAX_SCSI_BLOCKS) {
     abortf("scsi%d: buffer size exceeded\n", id);
@@ -86,8 +170,8 @@ int _scsi_read_block(int id, unsigned char *cmd, int cmd_size, unsigned char **p
   offset = sblock * 512;
   xfer_size = 512*scount;
 
-  if (u->fd <= 0)
-    return -1;
+//  if (u->fd <= 0)
+//    return -1;
 
   fd = u->fd;
 
@@ -97,23 +181,27 @@ int _scsi_read_block(int id, unsigned char *cmd, int cmd_size, unsigned char **p
   *pbuf = u->data;
   *psiz = xfer_size;
 
-  printf("scsi%d: read xfer; block=%d, blocks=%d, bytes=%d\n", id, sblock, scount, xfer_size);
+  if (trace_scsi) printf("scsi%d: read xfer; block=%d, blocks=%d, bytes=%d\n", id, sblock, scount, xfer_size);
 
-  lseek(fd, offset, SEEK_SET);
-  ret = read(fd, u->data, xfer_size);
-  if (ret < 0) {
-    perror( u->fname[ u->fileno ] );
-    abortf("scsi read failed\n");
+  if (fd > 0) {
+    lseek(fd, offset, SEEK_SET);
+    ret = read(fd, u->data, xfer_size);
+    if (ret < 0) {
+      perror( u->fname[ u->fileno ] );
+      abortf("scsi read failed\n");
+    }
+  } else {
+    memset(u->data, 0, xfer_size);
   }
 
   u->block_no += ret/512;
 
-  printf("scsi%d: read xfer; final bytes=%d\n", id, *psiz);
+  if (trace_scsi) printf("scsi%d: read xfer; final bytes=%d\n", id, *psiz);
 
   if (ret < xfer_size) {
     u->eof = 1;
     u->status[0] = 0x02;
-    printf("scsi%d: read eof; chk\n", id);
+    if (trace_scsi) printf("scsi%d: read eof; chk\n", id);
     *psiz = ret;
   }
 
@@ -127,11 +215,11 @@ int _scsi_write_block_start(int id, unsigned char *cmd, int cmd_size, unsigned c
   int sblock, scount, xfer_size;
 
   u = &scsi_units[id];
-  sblock = (cmd[2] << 8) | cmd[3];
+  sblock = ((cmd[1] & 0x1f) << 16) | (cmd[2] << 8) | cmd[3];
   scount = cmd[4];
 
   if (trace_scsi)
-    printf("scsi%d: _scsi_write_block_start() sblock %x, slen %x\n", id, sblock, scount);
+    printf("scsi%d: _scsi_write_block_start() sblock 0x%x, slen 0x%x\n", id, sblock, scount);
 
   if (scount > MAX_SCSI_BLOCKS) {
     abortf("scsi%d: buffer size exceeded\n", id);
@@ -143,6 +231,7 @@ int _scsi_write_block_start(int id, unsigned char *cmd, int cmd_size, unsigned c
   xfer_size = 512*scount;
 
   if (u->fd <= 0) {
+    printf("scsi%d: no fd open for device?\n", id);
     return -1;
   }
 
@@ -210,7 +299,7 @@ int _scsi_request_sense(int id, unsigned char *cmd, int cmd_size, unsigned char 
 
   /* tape? */
   if (u->tape) {
-    printf("scsi%d: eof %d\n", id, u->eof);
+    if (trace_scsi) printf("scsi%d: eof %d\n", id, u->eof);
     u->data[0] = u->eof ? 0x01 : 0x00;
     u->data[4] = u->data[0];
 
@@ -223,8 +312,8 @@ int _scsi_request_sense(int id, unsigned char *cmd, int cmd_size, unsigned char 
   *pbuf = u->data;
   *psiz = xfer_size;
 
-  printf("scsi%d: sense data (%d) %02x %02x %02x %02x\n",
-	 id, xfer_size, u->data[0], u->data[1], u->data[2], u->data[3]);
+  if (trace_scsi) printf("scsi%d: sense data (%d) %02x %02x %02x %02x\n",
+			 id, xfer_size, u->data[0], u->data[1], u->data[2], u->data[3]);
 
   return 0;
 }
@@ -328,45 +417,50 @@ void _scsi_update_bus_state(unsigned int out, unsigned int *pirq)
 
   switch (scsi_bus_phase) {
   case PHASE_BUS_FREE:
-    if (trace_scsi) printf("scsi: PHASE_BUS_FREE\n");
+    if (trace_scsi > 1) printf("scsi: PHASE_BUS_FREE\n");
+if (trace_scsi && id_selected >= 0) printf("scsi: PHASE_BUS_FREE (last select %d)\n", id_selected);
     id_selected = -1;
     if (scsi_bus_state & SCSI_BUS_SEL) {
       _scsi_set_phase(PHASE_SELECTION, 0);
-      if (trace_scsi) printf("scsi: SEL, data 0x%x (sc_data 0x%x)\n", scsi_bus_data, sc_get_data());
+      if (trace_scsi > 1) printf("scsi: SEL, data 0x%x (sc_data 0x%x)\n", scsi_bus_data, sc_get_data());
 
       if (scsi_bus_data == 0x01) {
 	scsi_bus_state |= SCSI_BUS_BSY;
-	if (trace_scsi) printf("scsi: target id0\n");
+	if (trace_scsi > 1) printf("scsi: target id0\n");
 	id_selected = 0;
       } else
 	if (scsi_bus_data == 0x10) {
 	  scsi_bus_state |= SCSI_BUS_BSY;
-	  if (trace_scsi) printf("scsi: target id4\n");
+	  if (trace_scsi > 1) printf("scsi: target id4\n");
 	  id_selected = 4;
       } else {
+        int x;
+	for (x = 0; x < 8; x++) if (scsi_bus_data & (1 << x)) { id_selected = x; printf("scsi: target id%d\n", x); break; }
 	scsi_bus_state &= ~SCSI_BUS_BSY;
-	if (trace_scsi) printf("scsi: ~id0&~id4, remove BSY\n");
-_scsi_set_phase(PHASE_BUS_FREE, 0);
-_scsi_show_state();
+scsi_bus_state = 0;
+//	if (trace_scsi) printf("scsi: ~id0&~id4, remove BSY\n");
+	if (trace_scsi) printf("scsi: bus %02x, remove BSY\n", scsi_bus_data);
+//_scsi_set_phase(PHASE_BUS_FREE, 0);
+if (trace_scsi > 1) _scsi_show_state();
 scsi_bus_data = 0;
-scsi_bus_data = 0xff;
+//scsi_bus_data = 0xff;
       }
     }
     break;
   case PHASE_ARBITRATION:
     break;
   case PHASE_SELECTION:
-    if (trace_scsi) printf("scsi: PHASE_SELECTION (%d)\n", time_in_state);
+    if (trace_scsi > 1) printf("scsi: PHASE_SELECTION (%d)\n", time_in_state);
 
     if ((scsi_bus_state & SCSI_BUS_SEL) == 0) {
       scsi_bus_state |= SCSI_BUS_BSY;
       _scsi_set_phase(PHASE_COMMAND, 1);
-      if (trace_scsi) printf("scsi: PHASE_SELECTION, no SEL -> COMMAND\n");
+      if (trace_scsi > 1) printf("scsi: PHASE_SELECTION, no SEL -> COMMAND\n");
     }
 
     if ((scsi_bus_state & (SCSI_BUS_SEL|SCSI_BUS_BSY)) == 0 && time_in_state > 2) {
       _scsi_set_phase(PHASE_BUS_FREE, 0);
-      if (trace_scsi) printf("scsi: PHASE_SELECTION, no SEL, no BSY -> BUS-FREE\n");
+      if (trace_scsi > 1) printf("scsi: PHASE_SELECTION, no SEL, no BSY -> BUS-FREE\n");
     }
     break;
   case PHASE_RESELECTION:
@@ -376,7 +470,7 @@ scsi_bus_data = 0xff;
     break;
 
   case PHASE_COMMAND:
-    if (trace_scsi) printf("scsi: COMMAND (%d)\n", time_in_state);
+    if (trace_scsi > 1) printf("scsi: COMMAND (%d)\n", time_in_state);
     if (time_in_state == 0) {
       scsi_cmd_size = 0;
       scsi_irq = 0;
@@ -391,30 +485,37 @@ scsi_bus_data = 0xff;
       if (trace_scsi && scsi_cmd_size == 1)
 	printf("scsi: command done; cmd[0] %02x\n", scsi_cmd_buf[0]);
 
+      if (id_selected == 4 && scsi_cmd_size == 6) {
+	printf("scsi: tape command %02x\n", scsi_cmd_buf[0]);
+      }
+
       switch ((scsi_cmd_buf[0] & 0xf0) >> 4) {
       case 0:
 	if (scsi_cmd_size == 6) {
-	  if (trace_scsi || 1)
+	  if (trace_scsi)
 	    printf("scsi: command0 done; size %d, cmd[0] %02x\n", scsi_cmd_size, scsi_cmd_buf[0]);
 	  *pirq = 1;
+	  sc_reset_odd_len();
 	  switch (scsi_cmd_buf[0]) {
 	  case 0x00: /* STATUS (test unit ready) */
-	    if (trace_scsi || 1) printf("scsi: command status\n");
+	    if (trace_scsi) printf("scsi: command status\n");
+	    _scsi_test_unit_ready(id_selected, scsi_cmd_buf, 6, &pbuf, &psiz);
+//	    sc_dma_read_data(pbuf, psiz);
 	    _scsi_set_phase(PHASE_STATUS, 0);
 	    break;
 	  case 0x01: /* REWIND */
-	    if (trace_scsi || 1) printf("scsi: command rewind\n");
+	    if (trace_scsi) printf("scsi: command rewind\n");
 	    _scsi_set_phase(PHASE_STATUS, 0);
 	    _scsi_set_filenum(id_selected, 0);
 	    break;
 	  case 0x03: /* SENSE */
-	    if (trace_scsi || 1) printf("scsi: command sense\n");
+	    if (trace_scsi) printf("scsi: command sense\n");
 	    _scsi_request_sense(id_selected, scsi_cmd_buf, 6, &pbuf, &psiz);
 	    sc_dma_read_data(pbuf, psiz);
 	    _scsi_set_phase(PHASE_STATUS, 0);
 	    break;
 	  case 0x08: /* READ */
-	    if (trace_scsi || 1) 
+	    if (trace_scsi || trace_armed) 
 	      printf("scsi: command READ %02x %02x %02x %02x %02x %02x %02x %02x\n",
 		     scsi_cmd_buf[0], scsi_cmd_buf[1], scsi_cmd_buf[2], scsi_cmd_buf[3], 
 		     scsi_cmd_buf[4], scsi_cmd_buf[5], scsi_cmd_buf[6], scsi_cmd_buf[7]);
@@ -429,18 +530,24 @@ scsi_bus_data = 0xff;
 	    _scsi_set_phase(PHASE_STATUS, 0);
 	    break;
 	  case 0x0a: /* WRITE */
-	    if (trace_scsi || 1) 
+	    if (trace_scsi) {
 	      printf("scsi: command WRITE %02x %02x %02x %02x %02x %02x %02x %02x\n",
 		     scsi_cmd_buf[0], scsi_cmd_buf[1], scsi_cmd_buf[2], scsi_cmd_buf[3], 
 		     scsi_cmd_buf[4], scsi_cmd_buf[5], scsi_cmd_buf[6], scsi_cmd_buf[7]);
+//	      trace_scsi = 1;
+//	      trace_sc = 1;
+	    }
 	    _scsi_write_block_start(id_selected, scsi_cmd_buf, 6, &pbuf, &psiz);
 	    sc_dma_write_data(pbuf, psiz);
 	    _scsi_write_block_end(id_selected, scsi_cmd_buf, 6, pbuf, psiz);
 	    _scsi_set_phase(PHASE_STATUS, 0);
 	    break;
 	  case 0x0d: /* QIC02 (vendor specific for cipher tape) */
-	    printf("scsi: cmmand QIC02");
+	    printf("scsi: command QIC02\n");
 	    _scsi_set_phase(PHASE_STATUS, 0);
+	    break;
+	  default:
+	    printf("scsi: command0 %02x?", scsi_cmd_buf[0]);
 	    break;
 	  }
 	}
@@ -452,12 +559,12 @@ scsi_bus_data = 0xff;
 	  *pirq = 1;
 	  switch (scsi_cmd_buf[0]) {
 	  case 0x11: /* SPACE */
-	    if (trace_scsi || 1) printf("scsi: command space\n");
+	    if (trace_scsi) printf("scsi: command space\n");
 	    _scsi_set_phase(PHASE_STATUS, 0);
 	    _scsi_next_file(id_selected);
 	    break;
 	  case 0x12: /* INQUIRY */
-	    if (trace_scsi || 1)
+	    if (trace_scsi)
 	      printf("scsi: command INQUIRY %02x %02x %02x %02x %02x %02x %02x %02x\n",
 		     scsi_cmd_buf[0], scsi_cmd_buf[1], scsi_cmd_buf[2], scsi_cmd_buf[3], 
 		     scsi_cmd_buf[4], scsi_cmd_buf[5], scsi_cmd_buf[6], scsi_cmd_buf[7]);
@@ -468,8 +575,27 @@ scsi_bus_data = 0xff;
 	    _scsi_set_phase(PHASE_STATUS, 0);
 	    break;
 	  case 0x15: /* MODE_SELECT */
-	    if (trace_scsi || 1) printf("scsi: command mode_select\n");
+	    if (trace_scsi) printf("scsi: command mode_select\n");
+	    if (_scsi_mode_select(id_selected, scsi_cmd_buf, 6, &pbuf, &psiz)) {
+	      abortf("scsi: inquiry failed\n");
+	    }
+	    sc_dma_read_data(pbuf, psiz);
 	    _scsi_set_phase(PHASE_STATUS, 0);
+	    break;
+	  case 0x1a: /* MODE_SENSE */
+	    if (trace_scsi) printf("scsi: command mode_sense\n");
+	    if (_scsi_mode_sense(id_selected, scsi_cmd_buf, 6, &pbuf, &psiz)) {
+	      abortf("scsi: mode sense failed\n");
+	    }
+	    sc_dma_read_data(pbuf, psiz);
+	    _scsi_set_phase(PHASE_STATUS, 0);
+	    break;
+	  case 0x1b: /* START_STOP_UNIT */
+	    if (trace_scsi) printf("scsi: command start_stop_unit\n");
+	    _scsi_set_phase(PHASE_STATUS, 0);
+	    break;
+	  default:
+	    printf("scsi: command1 %02x?", scsi_cmd_buf[0]);
 	    break;
 	  }
 	}
@@ -479,7 +605,7 @@ scsi_bus_data = 0xff;
     break;
 
   case PHASE_STATUS:
-    if (trace_scsi) printf("scsi: STATUS (%d)\n", time_in_state);
+    if (trace_scsi > 1) printf("scsi: STATUS (%d)\n", time_in_state);
     if (time_in_state == 1) {
       _scsi_set_state();
       scsi_bus_state |= SCSI_BUS_REQ;
@@ -495,7 +621,7 @@ scsi_bus_data = 0xff;
     break;
 
   case PHASE_MESSAGE_IN:
-    if (trace_scsi) printf("scsi: MESSAGE_IN (%d)\n", time_in_state);
+    if (trace_scsi > 1) printf("scsi: MESSAGE_IN (%d)\n", time_in_state);
     if (time_in_state <= 1) {
       sc_set_cmd_reg(0x0);
       _scsi_set_state();
@@ -586,7 +712,7 @@ int _scsi_set_filenum(int unit, int num)
 
   u = &scsi_units[unit];
 
-  printf("scsi%d: set file %d '%s'\n", unit, num, u->fname[num]);
+  if (trace_scsi) printf("scsi%d: set file %d '%s'\n", unit, num, u->fname[num]);
 
   /* if open, close active file */
   if (u->fd > 0) {
@@ -641,6 +767,9 @@ int scsi_set_tape_image(int unit, int fileno, char *fname)
   scsi_units[unit].fileno = -1;
   scsi_units[unit].tape = 1;
   scsi_units[unit].ro = 1;
+
+//trace_scsi = 1;
+//trace_sc = 1;
 
   return _scsi_set_filenum(unit, 0);
 }

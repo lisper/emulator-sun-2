@@ -14,6 +14,8 @@
 
 extern int trace_mmu;
 extern int trace_sc;
+extern int trace_irq;
+extern int trace_armed;
 
 static unsigned short sc_dma_count;
 static unsigned int sc_dma_addr;
@@ -85,7 +87,7 @@ void _sc_scsi_update(void)
     sc_icr |= SC_ICR_INT_REQUEST;
     if (sc_icr & SC_ICR_INT_ENABLE) {
       if ((old_icr & SC_ICR_INT_REQUEST) == 0) {
-	if (1) printf("sc: irq %d\n", IRQ_SC);
+	if (trace_irq) printf("sc: irq %d\n", IRQ_SC);
 	int_controller_set(IRQ_SC);
       }
     }
@@ -118,11 +120,11 @@ unsigned int sc_read(unsigned address, int size)
     /* data */
   case 0x0:
     value = sc_data;
-    printf("sc: read data0 %02x\n", value);
+    if (trace_sc) printf("sc: read data0 %02x\n", value);
     break;
   case 0x1:
     value = sc_data;
-    printf("sc: read data1 %02x\n", value);
+    if (trace_sc) printf("sc: read data1 %02x\n", value);
     break;
 
     /* command/status */
@@ -151,7 +153,7 @@ unsigned int sc_read(unsigned address, int size)
 
   case 0xc:
     value = sc_dma_count;
-    if (0) printf("sc: read dma_count %x\n", sc_dma_count);
+    if (trace_sc) printf("sc: read dma_count %x\n", sc_dma_count);
     break;
 
   default:
@@ -236,13 +238,12 @@ void sc_dma_read_data(unsigned char *buf, int bufsiz)
   int i;
   extern unsigned char g_ram[];
 
-  if (0) {
+  if (trace_armed) {
     unsigned int va, pa, mtype, fault, pte;
 
-    printf("sc: dma %d bytes to 0x%x\n", bufsiz, sc_dma_addr);
     va = 0xf00000 + sc_dma_addr;
-    pa = cpu_map_address(va, 1, &mtype, &fault, &pte);
-    printf("sc: dma va %x pa %x mtype %d\n", va, pa, mtype);
+    pa = cpu_map_address(va, 5, 1, &mtype, &fault, &pte);
+    printf("sc: dma %d bytes to 0x%x; va %x pa %x mtype %d\n", bufsiz, sc_dma_addr, va, pa, mtype);
   }
 
 #if 0
@@ -250,35 +251,31 @@ void sc_dma_read_data(unsigned char *buf, int bufsiz)
     printf("sc: dma %d byte to 0x%x\n", bufsiz, sc_dma_addr);
     dumpbuffer(buf, bufsiz);
   }
-
-  {
-    short s, d;
-    s = 0;
-    for (i = 0; i < bufsiz; i += 2) {
-      d = (buf[i] << 8) | buf[i+1];
-      s ^= d;
-    }
-    printf("sum 0x%x\n", s);
-  }
 #endif
 
   for (i = 0; i < bufsiz; i++) {
-
     int mtype, fault;
     unsigned int va, pa, pte;
 
     va = 0xf00000 + sc_dma_addr;
-    pa = cpu_map_address(va, 1, &mtype, &fault, &pte);
+    pa = cpu_map_address(va, 5, 1, &mtype, &fault, &pte);
 
     g_ram[pa] = buf[i];
     sc_dma_addr++;
     sc_dma_count++;
   }
 
-  if (bufsiz & 1)
+  if (bufsiz & 1) {
     sc_icr |= SC_ICR_ODD_LENGTH;
-  else
+    sc_data = buf[bufsiz-1];
+    printf("sc: setting odd length %d\n", bufsiz);
+  } else
     sc_icr &= ~SC_ICR_ODD_LENGTH;
+}
+
+void sc_reset_odd_len(void)
+{
+  sc_icr &= ~SC_ICR_ODD_LENGTH;
 }
 
 void sc_dma_write_data(unsigned char *buf, int bufsiz)
@@ -291,7 +288,7 @@ void sc_dma_write_data(unsigned char *buf, int bufsiz)
 
     printf("sc: dma %d bytes to 0x%x\n", bufsiz, sc_dma_addr);
     va = 0xf00000 + sc_dma_addr;
-    pa = cpu_map_address(va, 1, &mtype, &fault, &pte);
+    pa = cpu_map_address(va, 5, 1, &mtype, &fault, &pte);
     printf("sc: dma va %x pa %x mtype %d\n", va, pa, mtype);
   }
 
@@ -301,7 +298,7 @@ void sc_dma_write_data(unsigned char *buf, int bufsiz)
     unsigned int va, pa, pte;
 
     va = 0xf00000 + sc_dma_addr;
-    pa = cpu_map_address(va, 1, &mtype, &fault, &pte);
+    pa = cpu_map_address(va, 5, 1, &mtype, &fault, &pte);
 
     buf[i] = g_ram[pa];
     sc_dma_addr++;

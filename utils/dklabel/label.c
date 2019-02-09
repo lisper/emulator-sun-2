@@ -20,8 +20,14 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
+	if (argc < 2)
+		exit(1);
+
 	dname = argv[1];
-	pname = argv[2];
+	if (argc == 3)
+		pname = argv[2];
+	else
+		pname = NULL;
 
 	dfd = open(dname, O_RDONLY);
 	if (dfd < 0) {
@@ -31,13 +37,15 @@ main(int argc, char *argv[])
 	dsize = read(dfd, disk, sizeof(disk));
 	close(dfd);
 
-	pfd = open(pname, O_RDONLY);
-	if (pfd < 0) {
-		perror(pname);
-		exit(1);
+	if (pname) {
+		pfd = open(pname, O_RDONLY);
+		if (pfd < 0) {
+			perror(pname);
+			exit(1);
+		}
+		psize = read(pfd, part, sizeof(part));
+		close(pfd);
 	}
-	psize = read(pfd, part, sizeof(part));
-	close(pfd);
 
 	l = (struct dk_label *)disk;
 	printf("label: %s\n", l->dkl_asciilabel);
@@ -54,18 +62,20 @@ main(int argc, char *argv[])
 		nblk = ntohl(l->dkl_map[i].dkl_nblk);
 		boff = cylno * ntohs(l->dkl_nhead) * ntohs(l->dkl_nsect);
 		coff = boff * 512;
-		printf("part %d: cyl %d, blocks %d; block offset %d, byte offset %lu (0x%lx)\n", i, cylno, nblk, boff, coff, coff);
+		printf("part %d: cyl %5d, blocks %6d; block offset %6d, byte offset %lu (0x%lx)\n", i, cylno, nblk, boff, coff, coff);
 		offsets[i] = coff;
 	}
 
-	printf("checking partition 1\n");
-	for (i = 0; i < psize; i++) {
-		unsigned char pb, db;
-		pb = part[i];
-		db = disk[offsets[1] + i];
-		if (pb != db) {
-			printf("partition mismatch want %02x, found %02x @ %d bytes\n", pb, db, i);
+	if (pname) {
+		printf("checking partition 1\n");
+		for (i = 0; i < psize; i++) {
+			unsigned char pb, db;
+			pb = part[i];
+			db = disk[offsets[1] + i];
+			if (pb != db) {
+				printf("partition mismatch want %02x, found %02x @ %d bytes\n", pb, db, i);
 //			exit(1);
+			}
 		}
 	}
 
