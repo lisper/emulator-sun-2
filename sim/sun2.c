@@ -94,8 +94,11 @@ void sdl_write(unsigned int offset, int size, unsigned value)
 
   }
 
+#ifdef __linux__
 //  accumulate_update(h, v, 32, 1);
+  // for some reason this slows down mac os with SDL 1.2
   SDL_UpdateRect(screen, h, v, size*8, 1);
+#endif
 }
 
 void sdl_init(void)
@@ -138,7 +141,6 @@ void sdl_poll(void)
   SDL_Event ev1, *ev = &ev1;
 
 //  send_accumulated_updates();
-
   SDL_UpdateRect(screen, 0, 0, cols-1, rows-1);
 
   while (SDL_PollEvent(ev)) {

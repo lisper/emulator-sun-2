@@ -25,6 +25,13 @@ CFLAGS = -I. -I$(M68K_SRC) $(EXTRA_INC) -g -O2 $(DEFS)
 
 all: sim 
 
+ifeq ($(UNAME_S),Darwin)
+SDLMain.o: SDLMain.m
+	$(CC) -c $(CFLAGS) -o $@ $<
+
+OBJ += SDLMain.o
+endif
+
 sim: $(OBJ) 
 	$(CC) -o sim $(OBJ) $(LIBS)
 

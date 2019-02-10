@@ -7,4 +7,21 @@ sim/sim --prom=media/rom/sun2-multi-rev-R.bin --disk=./my-sun2-s2.0-disk.img  --
 sim/sim --prom=media/rom/sun2-multi-rev-R.bin --disk=./my-sun2-s2.0-disk.img  --tape=media/tape/sunos-2.0-sun2/tape2 -q
 
 
-
+--- from a real sun-2 ---
+Sun UNIX 4.2 Release 2.0 (GENERIC) #1: Mon May 20 15:32:06 PDT 1985
+Copyright (c) 1985 by Sun Microsystems, Inc.
+mem = 2048K (0x200000)
+avail mem = 1495040
+Ethernet address = 8:0:20:1:d:d3
+sc0 at mbmem 80000 pri 2
+sd0 at sc0 slave 0
+sd1 at sc0 slave 1
+st0 at sc0 slave 32
+ropc0 at virtual ee0800
+zs0 at virtual eec800 pri 3
+zs2 at mbmem 80800 pri 3
+zs3 at mbmem 81000 pri 3
+ie0 at mbmem 88000 pri 3
+pi0 at virtual ee2000
+tod0 at virtual ee1000
+root on sd0
