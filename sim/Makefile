@@ -14,7 +14,7 @@ UNAME_S := $(shell uname -s)
 
 ifeq ($(UNAME_S),Darwin)
 	EXTRA_INC = -I/Library/Frameworks/SDL.framework/Headers
-	LIBS = -framework SDL
+	LIBS = -F /Library/Frameworks -framework SDL -framework Cocoa
 else
 	EXTRA_INC =
 	LIBS = -lSDL -lpthread
