@@ -12,12 +12,13 @@ DEFS = -DM68K_V33
 
 UNAME_S := $(shell uname -s)
 
+# Changed this to reflect move to SDL2
 ifeq ($(UNAME_S),Darwin)
-	EXTRA_INC = -I/Library/Frameworks/SDL.framework/Headers
-	LIBS = -F /Library/Frameworks -framework SDL -framework Cocoa
+	EXTRA_INC = -I/Library/Frameworks/SDL2.framework/Headers
+	LIBS = -F /Library/Frameworks -framework SDL2 -framework Cocoa
 else
 	EXTRA_INC =
-	LIBS = -lSDL -lpthread
+	LIBS = -lSDL2 -lpthread
 endif
 
 CFLAGS = -I. -I$(M68K_SRC) $(EXTRA_INC) -g -O2 $(DEFS)
@@ -25,12 +26,13 @@ CFLAGS = -I. -I$(M68K_SRC) $(EXTRA_INC) -g -O2 $(DEFS)
 
 all: sim 
 
-ifeq ($(UNAME_S),Darwin)
-SDLMain.o: SDLMain.m
-	$(CC) -c $(CFLAGS) -o $@ $<
+# This is no longer needed with SDL2 on Darwin...
+#ifeq ($(UNAME_S),Darwin)
+#SDLMain.o: SDLMain.m
+#	$(CC) -c $(CFLAGS) -o $@ $<
 
-OBJ += SDLMain.o
-endif
+#OBJ += SDLMain.o
+#endif
 
 sim: $(OBJ) 
 	$(CC) -o sim $(OBJ) $(LIBS)

@@ -33,16 +33,28 @@
 
 #include "sim.h"
 
+#define debug 0
+
 static unsigned char *fbmem;
-static SDL_Surface *screen;
+//static SDL_Surface *screen;
+static SDL_Window* screen;
+static SDL_Surface* surface;
+static SDL_Color COLOR_BLACK = {0,0,0,0};
+static SDL_Color COLOR_WHITE = {255,255,255,255};
+
+
 static int rows, cols;
+
+static
 
 static int toggle_trace;
 static unsigned int fbctrl;
 
 void sdl_clear(void)
 {
-  unsigned char *p = screen->pixels;
+  //unsigned char *p = screen->pixels;
+  unsigned char *p = surface->pixels;
+
   int i, j;
 
   for (i = 0; i < cols; i++)
@@ -50,20 +62,32 @@ void sdl_clear(void)
       *p = ~*p;
       p++;
     }
-
-  SDL_UpdateRect(screen, 0, 0, cols, rows);
 }
 
-#define COLOR_WHITE	0xff
-#define COLOR_BLACK	0
+// Helper function to find and set the SDL2 pixel
+void set_pixel(int offset,SDL_Color c) {
+  // Get plane depth of surface
+  int bpp = surface->format->BytesPerPixel;
+  // Temp var
+  int i=0;
+  // Get pixel array
+  uint8_t* pixels = (uint8_t*)surface-> pixels;
+  // Loop for each of R/G/B/Alpha
+  for(i=0;i<4;i++)
+    pixels[offset*bpp + i ] = SDL_MapRGB(surface->format, c.r, c.g, c.b);
+
+}
 
 void sdl_write(unsigned int offset, int size, unsigned value)
 {
-  unsigned char *ps = screen->pixels;
+  //  Lock surface before modifying, this is near instant if the surface does not need locking
+  SDL_LockSurface(surface);
+
   int i, h, v;
 
   if (0) printf("sdl_write offset %x size %d <- %x\n", offset, size, value);
 
+  // Multipy offset with bit plane depth
   offset *= 8;
   v = offset / cols;
   h = offset % cols;
@@ -71,34 +95,44 @@ void sdl_write(unsigned int offset, int size, unsigned value)
   switch (size) {
   case 1:
     for (i = 0; i < 8; i++) {
-      ps[offset + i] = (value & 0x80) ? COLOR_BLACK : COLOR_WHITE;
+      set_pixel(offset+i,(value & 0x80) ? COLOR_BLACK : COLOR_WHITE);
+      //ps[offset + i] = (value & 0x80) ? COLOR_BLACK : COLOR_WHITE;
       value <<= 1;
     }
     break;
   case 2:
-    if (value == 0x0) { for (i = 0; i < 16; i++) ps[offset + i] = COLOR_WHITE; } else
-    if (value == 0xffff) { for (i = 0; i < 16; i++) ps[offset + i] = COLOR_BLACK; } else
+    //if (value == 0x0) { for (i = 0; i < 16; i++) ps[offset + i] = COLOR_WHITE; } else
+    if (value == 0x0) { for (i = 0; i < 16; i++) set_pixel(offset+i,COLOR_WHITE); } else
+    //if (value == 0xffff) { for (i = 0; i < 16; i++) ps[offset + i] = COLOR_BLACK; } else
+    if (value == 0xffff) { for (i = 0; i < 16; i++) set_pixel(offset+i,COLOR_BLACK); } else
     for (i = 0; i < 16; i++) {
-      ps[offset + i] = (value & 0x8000) ? COLOR_BLACK : COLOR_WHITE;
+      set_pixel(offset+i,(value & 0x8000) ? COLOR_BLACK : COLOR_WHITE);
+      //ps[offset + i] = (value & 0x8000) ? COLOR_BLACK : COLOR_WHITE;
       value <<= 1;
     }
     break;
   case 4:
-    if (value == 0x0) { for (i = 0; i < 32; i++) ps[offset + i] = COLOR_WHITE; } else
-    if (value == 0xffffffff) { for (i = 0; i < 32; i++) ps[offset + i] = COLOR_BLACK; } else
+    //if (value == 0x0) { for (i = 0; i < 32; i++) ps[offset + i] = COLOR_WHITE; } else
+    if (value == 0x0) { for (i = 0; i < 32; i++) set_pixel(offset+i,COLOR_WHITE); } else
+    //if (value == 0xffffffff) { for (i = 0; i < 32; i++) ps[offset + i] = COLOR_BLACK; } else
+    if (value == 0xffffffff) { for (i = 0; i < 32; i++) set_pixel(offset+i,COLOR_BLACK); } else
     for (i = 0; i < 32; i++) {
-      ps[offset + i] = (value & 0x80000000) ? COLOR_BLACK : COLOR_WHITE;
+      set_pixel(offset+i,(value & 0x80000000) ? COLOR_BLACK : COLOR_WHITE);
+      //ps[offset + i] = (value & 0x80000000) ? COLOR_BLACK : COLOR_WHITE;
       value <<= 1;
     }
     break;
 
+  // Unlock surface after modifying
+  SDL_UnlockSurface(surface);
   }
 
-#ifdef __linux__
+// This is no longer needed
+//#ifdef __linux__
 //  accumulate_update(h, v, 32, 1);
   // for some reason this slows down mac os with SDL 1.2
-  SDL_UpdateRect(screen, h, v, size*8, 1);
-#endif
+//  SDL_UpdateRect(screen, h, v, size*8, 1);
+//#endif
 }
 
 void sdl_init(void)
@@ -115,61 +149,82 @@ void sdl_init(void)
 
     if (0) printf("Initialize display %dx%d\n", cols, rows);
 
-    flags = SDL_INIT_VIDEO | SDL_INIT_NOPARACHUTE;
+    //flags = SDL_INIT_VIDEO | SDL_INIT_NOPARACHUTE;
+    // Init parachute is the default in SDL2 and no longer needed
+    flags = SDL_INIT_VIDEO;
 
     if (SDL_Init(flags)) {
         printf("SDL initialization failed\n");
         return;
     }
 
-    flags = SDL_HWSURFACE|SDL_ASYNCBLIT|SDL_HWACCEL;
+    // SDL2 is now hardware accelerated by default so this isn't needed anymore
+    // flags = SDL_HWSURFACE|SDL_ASYNCBLIT|SDL_HWACCEL;
+    flags = SDL_WINDOW_SHOWN;
 
-    screen = SDL_SetVideoMode(cols, rows, 8, flags);
+    //screen = SDL_SetVideoMode(cols, rows, 8, flags);
+    screen = SDL_CreateWindow("My Game Window",
+                          SDL_WINDOWPOS_CENTERED,
+                          SDL_WINDOWPOS_CENTERED,
+                          cols,rows,
+                          flags);
+
+    surface = SDL_GetWindowSurface(screen);
+
 
     if (!screen) {
         printf("Could not open SDL display\n");
         return;
     }
 
-    SDL_WM_SetCaption("Sun2", "Sun2");
+    if(!surface) {
+	printf("Can't init surface\n");
+	return;
+    }
+
+    SDL_SetWindowTitle(screen,"Sun2");
 }
 
-void sun2_sdl_key(int sdl_code, int modifiers, unsigned int unicode, int down);
+//void sun2_sdl_key(int sdl_code, int modifiers, unsigned int unicode, int down);
+void sun2_sdl_key(SDL_Keycode sdl_code, uint16_t modifiers, SDL_Scancode unicode, int down);
 
 void sdl_poll(void)
 {
-  SDL_Event ev1, *ev = &ev1;
+  SDL_Event event;
+  //SDL_Event ev1, *ev = &ev1;
 
-//  send_accumulated_updates();
-  SDL_UpdateRect(screen, 0, 0, cols-1, rows-1);
+  //  send_accumulated_updates();
+  SDL_UpdateWindowSurface(screen);
 
-  while (SDL_PollEvent(ev)) {
-    switch (ev->type) {
-    case SDL_VIDEOEXPOSE:
-//      sdl_update(ds, 0, 0, screen->w, screen->h);
-      break;
+  while (SDL_PollEvent(&event)) {
+    switch (event.type) {
+	    case SDL_WINDOWEVENT:
+	//      sdl_update(ds, 0, 0, screen->w, screen->h);
+	      break;
 
-    case SDL_KEYDOWN:
-      sun2_sdl_key(ev->key.keysym.sym, ev->key.keysym.mod, ev->key.keysym.unicode, 1);
-      break;
+	    case SDL_KEYDOWN:
+	      sun2_sdl_key(event.key.keysym.sym, event.key.keysym.mod, event.key.keysym.scancode, 1);
+	      //sun2_sdl_key(ev->key.keysym.sym, ev->key.keysym.mod, ev->key.keysym.unicode, 1);
+	      break;
 
-    case SDL_KEYUP:
-      sun2_sdl_key(ev->key.keysym.sym, ev->key.keysym.mod, ev->key.keysym.unicode, 0);
-      break;
-    case SDL_QUIT:
-//      sdl_system_shutdown_request();
-      break;
-    case SDL_MOUSEMOTION:
-//      sdl_send_mouse_event();
-      break;
-    case SDL_MOUSEBUTTONDOWN:
-    case SDL_MOUSEBUTTONUP:
-    {
-      /*SDL_MouseButtonEvent *bev = &ev->button;*/
-//      sdl_send_mouse_event();
-    }
-    break;
-    }
+	    case SDL_KEYUP:
+	      sun2_sdl_key(event.key.keysym.sym, event.key.keysym.mod, event.key.keysym.scancode, 0);
+	      //sun2_sdl_key(ev->key.keysym.sym, ev->key.keysym.mod, ev->key.keysym.unicode, 0);
+	      break;
+	    case SDL_QUIT:
+	//      sdl_system_shutdown_request();
+	      break;
+	    case SDL_MOUSEMOTION:
+	//      sdl_send_mouse_event();
+	      break;
+	    case SDL_MOUSEBUTTONDOWN:
+	    case SDL_MOUSEBUTTONUP:
+	    {
+	      /*SDL_MouseButtonEvent *bev = &ev->button;*/
+	//      sdl_send_mouse_event();
+	    }
+	    break;
+	    }
   }
 }
 
@@ -301,15 +356,24 @@ void sun2_kb_write(int value, int size)
 
 unsigned int map_sdl_to_sun2kb[512];
 
-#define SHIFTED 0x100
+#define SHIFTED 0x10s
 
-void sun2_sdl_key(int sdl_code, int modifiers, unsigned int unicode, int down)
+//void sun2_sdl_key(int sdl_code, int modifiers, unsigned int unicode, int down)
+void sun2_sdl_key(SDL_Keycode sdl_code, uint16_t modifiers, SDL_Scancode scancode, int down)
 {
   unsigned int mapped, shifted;
 
-  if (0) printf("sdl: %d %d %d %d\n", sdl_code, modifiers, unicode, down);
+  if (1) printf("sdl: %u %u %u %d\n", sdl_code, modifiers, scancode, down);
 
+  // Keycodes without character representation should be ORed with 1<<31
+  if(sdl_code >= 128)
+	sdl_code = scancode;
+
+  // This is a bit of a hack, this isn't really a char at this point, strange things will happen here if F1 is pressed for example
+  // TODO: need to add a real mapping function
   mapped = map_sdl_to_sun2kb[sdl_code];
+  if (1) printf("sdl: %u %u %u %u %d \n", sdl_code, modifiers, scancode, mapped, down);
+  //mapped = map_sdl_to_sun2kb[sdl_code];
 //  shifted = mapped & SHIFTED;
 
   mapped &= 0xff;
@@ -427,14 +491,14 @@ void sun2_init(void)
   m(SDLK_m, 106);
   m(SDLK_COMMA, 107);
   m(SDLK_PERIOD, 108);
-  m(SDLK_SLASH, 109);
+  m(SDL_SCANCODE_SLASH, 109);
 
   m(SDLK_SPACE, 121);
 
-  m(SDLK_LCTRL, 76);
-  m(SDLK_RCTRL, 76);
-  m(SDLK_LSHIFT, 99);
-  m(SDLK_RSHIFT, 111);
+  m(SDL_SCANCODE_LCTRL, 76);
+  m(SDL_SCANCODE_RCTRL, 76);
+  m(SDL_SCANCODE_LSHIFT, 99);
+  m(SDL_SCANCODE_RSHIFT,111);
 
 #if 0
   /* shifted */
