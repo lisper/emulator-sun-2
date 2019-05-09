@@ -36,6 +36,14 @@ unsigned mm58167_read(unsigned pa, int size);
 void mm58167_write(unsigned pa, unsigned value, int size);
 void mm58167_update(void);
 
+// 3C400 ethernet card functions usable from outsid
+void e3c400_enable_trace(int level);
+int e3c400_device_ack();
+void e3c400_init(void);
+void e3c400_update(void);
+uint32_t e3c400_read(uint32_t addr, int32_t size);
+void e3c400_write(uint32_t addr, uint32_t size, uint32_t value);
+
 unsigned int sc_read(unsigned address, int size);
 void sc_write(unsigned int address, int size, unsigned int value);
 int sc_device_ack(void);

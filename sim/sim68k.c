@@ -208,6 +208,10 @@ pending_buserr();
     value = mm58167_read(pa, size);
     break;
 
+  case 0xe0000:
+    value = e3c400_read(pa, size);
+    break;
+
   default:
     printf("io: read %x -> %x (%d) pc %x\n", pa, value, size, m68k_get_reg(NULL, M68K_REG_PC));
     break;
@@ -246,6 +250,10 @@ void io_write(int size, unsigned int pa, unsigned int value)
   case 0x380e:
   case 0x3828:
     mm58167_write(pa, value, size);
+    break;
+
+  case 0xe0000:
+    value = e3c400_read(pa, size);
     break;
 
   default:
@@ -636,8 +644,8 @@ unsigned int cpu_read_mbio(unsigned int address, int size)
 {
   unsigned int value;
   value = 0xffffffff;
-  pending_buserr();
   if (1) printf("cpu_read_mbio address %x (%d) -> %x\n", address, size, value);
+  pending_buserr();
   return value;
 }
 
@@ -653,6 +661,9 @@ unsigned int cpu_read_mbmem(unsigned int address, int size)
   value = 0xffffffff;
   if (address >= 0x80000 && address <= 0x8000e) {
     value = sc_read(address, size);
+  // 3c400 board takes up 8k from e0000 to e2000, the address is dip settable but this is afaik the default and sufficient for our needs
+  } else if(address >= 0xe0000 && address < 0xe2000) {
+    value = e3c400_read(address, size);
   } else
     switch (address) {
 #if 0
@@ -678,6 +689,8 @@ void cpu_write_mbmem(unsigned int address, int size, unsigned int value)
 
   if (address >= 0x80000 && address <= 0x8000f) {
     sc_write(address, size, value);
+  } else if(address >= 0xe0000 && address <= 0xe2000) {
+    e3c400_write(address, size, value);
   } else
   switch (address) {
   default:
@@ -876,7 +889,7 @@ int cpu_irq_ack(int level)
 //    case IRQ_SW_INT2:
 //      return sw_int_ack(2);
     case IRQ_SW_INT3:
-      return sw_int_ack(3);
+      return e3c400_device_ack();
     }
   return M68K_INT_ACK_SPURIOUS;
 }
@@ -942,9 +955,13 @@ static unsigned int sdl_poll_delay;
 
 void io_update(void)
 {
+
+/* here, do your time-consuming job */
+
   am9513_update();
   mm58167_update();
   scc_update();
+  e3c400_update();
 
   if (sdl_poll_delay++ == 10000) {
     sdl_poll_delay = 0;
@@ -954,6 +971,7 @@ void io_update(void)
 
 void io_init(void)
 {
+  e3c400_init();
   sun2_init();
 }
 
@@ -1248,7 +1266,7 @@ unsigned int cpu_read(int size, unsigned int address)
       value = io_read(size, address, pa);
       break;
     case PGTYPE_MBMEM:
-      if (0) printf("cpu_read: MBMEM; address %x pa %x size %d pte %x\n", address, pa, size, pte);
+      if (0) printf("3C400 cpu_read: MBMEM; address %x pa %x size %d pte %x\n", address, pa, size, pte);
       value = cpu_read_mbmem(pa, size);
       break;
 

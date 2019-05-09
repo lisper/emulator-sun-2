@@ -3,7 +3,7 @@
 # 10/2014  Brad Parker <brad@heeltoe.com>
 # Copyright (C) 2014-2019 Brad Parker <brad@heeltoe.com>
 
-OBJ = sim.o sim68k.o sun2.o scc.o am9513.o mm58167.o sc.o scsi.o utils.o \
+OBJ = sim.o sim68k.o sun2.o scc.o am9513.o mm58167.o 3c400.o sc.o scsi.o utils.o \
 	m68kcpu.o m68kops.o m68kopac.o m68kopdm.o m68kopnz.o m68kdasm.o 
 
 M68K_SRC = ../m68k

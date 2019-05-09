@@ -363,17 +363,15 @@ void sun2_sdl_key(SDL_Keycode sdl_code, uint16_t modifiers, SDL_Scancode scancod
 {
   unsigned int mapped, shifted;
 
-  if (1) printf("sdl: %u %u %u %d\n", sdl_code, modifiers, scancode, down);
+  if (0) printf("sdl: %u %u %u %d\n", sdl_code, modifiers, scancode, down);
 
-  // Keycodes without character representation should be ORed with 1<<31
-  if(sdl_code >= 128)
+  // If the keycode is over 128 use the scancode instead
+  if(sdl_code >= 255)
 	sdl_code = scancode;
 
-  // This is a bit of a hack, this isn't really a char at this point, strange things will happen here if F1 is pressed for example
-  // TODO: need to add a real mapping function
+  // This should still work, just with slightly different values
   mapped = map_sdl_to_sun2kb[sdl_code];
-  if (1) printf("sdl: %u %u %u %u %d \n", sdl_code, modifiers, scancode, mapped, down);
-  //mapped = map_sdl_to_sun2kb[sdl_code];
+  if (0) printf("sdl: %u %u %u %u %d \n", sdl_code, modifiers, scancode, mapped, down);
 //  shifted = mapped & SHIFTED;
 
   mapped &= 0xff;
@@ -491,7 +489,7 @@ void sun2_init(void)
   m(SDLK_m, 106);
   m(SDLK_COMMA, 107);
   m(SDLK_PERIOD, 108);
-  m(SDL_SCANCODE_SLASH, 109);
+  m(SDLK_SLASH, 109);
 
   m(SDLK_SPACE, 121);
 

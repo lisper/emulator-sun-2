@@ -6,6 +6,7 @@
  */
 
 #include <stdio.h>
+#include <stdint.h>
 
 #include "sim68k.h"
 #include "m68k.h"
