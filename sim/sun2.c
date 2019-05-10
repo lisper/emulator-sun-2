@@ -28,7 +28,7 @@
 #ifdef __APPLE__
 #include <SDL.h>
 #else
-#include <SDL/SDL.h>
+#include <SDL2/SDL.h>
 #endif
 
 #include "sim.h"
@@ -44,8 +44,6 @@ static SDL_Color COLOR_WHITE = {255,255,255,255};
 
 
 static int rows, cols;
-
-static
 
 static int toggle_trace;
 static unsigned int fbctrl;
