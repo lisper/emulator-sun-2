@@ -18,8 +18,8 @@ The SCSI emulation code is still shakey for tapes, however.
 
 SunOS 2.0 will boot multiuser and works as you'd expect.
 
-- Some changes by sigurbjornl -
+- Some changes by sigurbjornl
 
-Converted to use SDL2
-Added an alpha quality 3C400 ethernet driver to the sun, with support for using bpf for packet input/output
+--Converted to use SDL2
+--Added an alpha quality 3C400 ethernet driver to the sun, with support for using bpf for packet input/output
 
