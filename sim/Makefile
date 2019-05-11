@@ -16,6 +16,9 @@ UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Darwin)
 	EXTRA_INC = -I/Library/Frameworks/SDL2.framework/Headers
 	LIBS = -F /Library/Frameworks -framework SDL2 -framework Cocoa
+else ($(UNAME_S),NetBSD)
+	EXTRA_INC = -I/usr/pkg/include
+	LIBS = -R/usr/pkg/lib -L/usr/pkg/lib -lSDL2 -lpthread
 else
 	EXTRA_INC =
 	LIBS = -lSDL2 -lpthread
