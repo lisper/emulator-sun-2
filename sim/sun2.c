@@ -152,7 +152,7 @@ void sdl_init(void)
     flags = SDL_INIT_VIDEO;
 
     if (SDL_Init(flags)) {
-        printf("SDL initialization failed\n");
+        printf("SDL initialization failed %s\n",SDL_GetError());
         return;
     }
 
