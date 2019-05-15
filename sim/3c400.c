@@ -66,7 +66,7 @@
 #define MAC6 0xe0;
 
 // BPF interface
-#define BPFINTERFACE "en0"
+#define BPFINTERFACE "vmnet8"
 
 
 #if defined(__unix__)|| defined(__MACH__)
@@ -698,6 +698,7 @@ void e3c400_init(void) {
 	filter.bf_insns = &bpf_ours[0];
 	// Init filter if PA >2
 	if(mecsr->csr.pa > 2) {
+		printf("Driver mode is promiscious, no filter set\n");
 		if(ioctl(bpf, BIOCSETF, &filter) < 0) {
 			//  Set BPF to 0 so we don't use it
 			bpf=0;
@@ -705,6 +706,12 @@ void e3c400_init(void) {
 			printf("Can't enable BPF packet filtering, BPF disabled\n");
 		} 
 	} 
+	// Set promiscious mode
+	int promisc=1;
+	if(ioctl(bpf,BIOCPROMISC,&promisc) <0) {
+		// Warn user
+		printf("Failed to set promiscious mode, your success with broadcast packet will vary\n");
+	}
 	// Stop BPF from overwriting the mac address in the header, it makes life much easier if we can identify our own fake mac-address on the wire
 	int noautofill=1;
 	if(ioctl(bpf,BIOCSHDRCMPLT,&noautofill) < 0) {
