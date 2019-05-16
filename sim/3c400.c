@@ -801,12 +801,16 @@ void e3c400_update(void) {
 		readbytes=0;
 
 		// Loop if there are packets
-		do {
+		while(mecsr->csr.absw || mecsr->csr.bbsw) {
 			// Set null terminator at start of buffer
 			(void)memset(buffer,'\0',blen);
 
 			// Read from BPF
 			readbytes=read(bpf,buffer,blen);
+	
+			// If no bytes are available, exit
+			if(readbytes <= 0)
+				break;
 
 			if(trace_3c400 && readbytes >=0)
 				printf("3C400: %ld bytes available to process in receive buffer\n",readbytes);
@@ -859,7 +863,7 @@ void e3c400_update(void) {
 				}
 				pointer += BPF_WORDALIGN(bh->bh_hdrlen + bh->bh_caplen);
 			}
-		} while(readbytes > 0); // Loop while there are bytes in the buffer
+		} // Loop while buffers are ready
 	}
 	if(bpf && buffer)
 		free(buffer);
