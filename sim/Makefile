@@ -3,7 +3,7 @@
 # 10/2014  Brad Parker <brad@heeltoe.com>
 # Copyright (C) 2014-2019 Brad Parker <brad@heeltoe.com>
 
-OBJ = sim.o sim68k.o sun2.o scc.o am9513.o mm58167.o sc.o scsi.o utils.o \
+OBJ = sim.o sim68k.o sun2.o scc.o am9513.o mm58167.o 3c400.o sc.o scsi.o utils.o \
 	m68kcpu.o m68kops.o m68kopac.o m68kopdm.o m68kopnz.o m68kdasm.o 
 
 M68K_SRC = ../m68k
@@ -12,12 +12,16 @@ DEFS = -DM68K_V33
 
 UNAME_S := $(shell uname -s)
 
+# Changed this to reflect move to SDL2
 ifeq ($(UNAME_S),Darwin)
-	EXTRA_INC = -I/Library/Frameworks/SDL.framework/Headers
-	LIBS = -F /Library/Frameworks -framework SDL -framework Cocoa
+	EXTRA_INC = -I/Library/Frameworks/SDL2.framework/Headers
+	LIBS = -F /Library/Frameworks -framework SDL2 -framework Cocoa
+else ($(UNAME_S),NetBSD)
+	EXTRA_INC = -I/usr/pkg/include
+	LIBS = -R/usr/pkg/lib -L/usr/pkg/lib -lSDL2 -lpthread
 else
 	EXTRA_INC =
-	LIBS = -lSDL -lpthread
+	LIBS = -lSDL2 -lpthread
 endif
 
 CFLAGS = -I. -I$(M68K_SRC) $(EXTRA_INC) -g -O2 $(DEFS)
@@ -25,12 +29,13 @@ CFLAGS = -I. -I$(M68K_SRC) $(EXTRA_INC) -g -O2 $(DEFS)
 
 all: sim 
 
-ifeq ($(UNAME_S),Darwin)
-SDLMain.o: SDLMain.m
-	$(CC) -c $(CFLAGS) -o $@ $<
+# This is no longer needed with SDL2 on Darwin...
+#ifeq ($(UNAME_S),Darwin)
+#SDLMain.o: SDLMain.m
+#	$(CC) -c $(CFLAGS) -o $@ $<
 
-OBJ += SDLMain.o
-endif
+#OBJ += SDLMain.o
+#endif
 
 sim: $(OBJ) 
 	$(CC) -o sim $(OBJ) $(LIBS)

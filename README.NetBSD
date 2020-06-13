@@ -1,0 +1,11 @@
+The code should now compile and work on NetBSD
+
+Run make clean ; make from the root.
+
+The Makefile will automatically run gmake in the relevant directories
+
+Requires the SDL2 pkg as well as libX11
+
+If you get an error about not being able to init the video make sure you've installed all the dependencies listed here
+
+http://ftp.netbsd.org/pub/pkgsrc/current/pkgsrc/devel/SDL2/README.html

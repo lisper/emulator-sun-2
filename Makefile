@@ -1,9 +1,9 @@
 
 all:
-	make -C m68k all
-	make -C sim all
+	gmake -C m68k all
+	gmake -C sim all
 
 clean:
-	make -C m68k clean
-	make -C sim clean
+	gmake -C m68k clean
+	gmake -C sim clean
 

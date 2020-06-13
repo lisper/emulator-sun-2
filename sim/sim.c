@@ -234,11 +234,11 @@ char *tape_arg;
 char *boot_arg;
 char *kernel_arg;
 
-#ifdef __APPLE__
-int SDL_main(int argc, char **argv)
-#else
+//#ifdef __APPLE__
+//int SDL_main(int argc, char **argv)
+//#else
 int main(int argc, char **argv)
-#endif
+//#endif
 {
   int c;
   int digit_optind = 0;

@@ -641,7 +641,12 @@ opcode_struct* find_opcode(char* name, int size, char* spec_proc, char* spec_ea)
 	opcode_struct* op;
 
 
-	for(op = g_opcode_input_table;op->name != NULL;op++)
+	// FIX xcode always true warning
+	#if defined(__APPLE__)
+		for(op = g_opcode_input_table;&op->name[0] != '\0';op++)
+	#else
+		for(op = g_opcode_input_table;&op->name != NULL;op++)
+	#endif
 	{
 		if(	strcmp(name, op->name) == 0 &&
 			(size == (int)op->size) &&
@@ -657,7 +662,11 @@ opcode_struct* find_illegal_opcode(void)
 {
 	opcode_struct* op;
 
+	#if defined(__APPLE__)
+	for(op = g_opcode_input_table;op->name[0] != '\0';op++)
+	#else
 	for(op = g_opcode_input_table;op->name != NULL;op++)
+	#endif
 	{
 		if(strcmp(op->name, "illegal") == 0)
 			return op;
