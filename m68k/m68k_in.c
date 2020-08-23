@@ -7093,6 +7093,7 @@ M68KMAKE_OP(moves, 8, ., .)
 			uint word2 = OPER_I_16();
 			uint olday = AY;
 			uint ea = M68KMAKE_GET_EA_AY_8;
+			uint vv;
 
 			m68ki_trace_t0();			   /* auto-disable (see m68kcpu.h) */
 			if(BIT_B(word2))		   /* Register to memory */
@@ -7114,11 +7115,11 @@ M68KMAKE_OP(moves, 8, ., .)
 				return;
 			}
 			/* Memory to data register */
-			uint v = m68ki_read_8_fc(ea, REG_SFC);
+			vv = m68ki_read_8_fc(ea, REG_SFC);
 			if (FAULT_PENDING)
 				AY = olday;
 			else
-				REG_D[(word2 >> 12) & 7] = MASK_OUT_BELOW_8(REG_D[(word2 >> 12) & 7]) | v;
+				REG_D[(word2 >> 12) & 7] = MASK_OUT_BELOW_8(REG_D[(word2 >> 12) & 7]) | vv;
 			if(CPU_TYPE_IS_020_VARIANT(CPU_TYPE))
 				USE_CYCLES(2);
 			return;
@@ -7163,6 +7164,7 @@ M68KMAKE_OP(moves, 16, ., .)
 			uint word2 = OPER_I_16();
 			uint olday = AY;
 			uint ea = M68KMAKE_GET_EA_AY_16;
+			uint vv;
 
 			m68ki_trace_t0();			   /* auto-disable (see m68kcpu.h) */
 			if(BIT_B(word2))		   /* Register to memory */
@@ -7184,11 +7186,11 @@ M68KMAKE_OP(moves, 16, ., .)
 				return;
 			}
 			/* Memory to data register */
-			uint v = m68ki_read_16_fc(ea, REG_SFC);
+			vv = m68ki_read_16_fc(ea, REG_SFC);
 			if (FAULT_PENDING)
 				AY = olday;
 			else
-				REG_D[(word2 >> 12) & 7] = MASK_OUT_BELOW_16(REG_D[(word2 >> 12) & 7]) | v;
+				REG_D[(word2 >> 12) & 7] = MASK_OUT_BELOW_16(REG_D[(word2 >> 12) & 7]) | vv;
 			if(CPU_TYPE_IS_020_VARIANT(CPU_TYPE))
 				USE_CYCLES(2);
 			return;
@@ -7228,6 +7230,7 @@ M68KMAKE_OP(moves, 32, ., .)
 			uint olday = AY;
 			uint word2 = OPER_I_16();
 			uint ea = M68KMAKE_GET_EA_AY_32;
+			uint vv;
 
 			m68ki_trace_t0();			   /* auto-disable (see m68kcpu.h) */
 			if(BIT_B(word2))		   /* Register to memory */
@@ -7241,11 +7244,11 @@ M68KMAKE_OP(moves, 32, ., .)
 				return;
 			}
 			/* Memory to register */
-			uint v = m68ki_read_32_fc(ea, REG_SFC);
+			vv = m68ki_read_32_fc(ea, REG_SFC);
 			if (FAULT_PENDING)
 				AY = olday;
 			else
-				REG_DA[(word2 >> 12) & 15] = v;
+				REG_DA[(word2 >> 12) & 15] = vv;
 			if(CPU_TYPE_IS_020_VARIANT(CPU_TYPE))
 				USE_CYCLES(2);
 			return;
