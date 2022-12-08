@@ -4,6 +4,8 @@
  * 10/2014  Brad Parker <brad@heeltoe.com>
  */
 
+#include <stdint.h>
+
 /* IRQ connections */
 #define IRQ_9513_TIMER1	7
 #define IRQ_SCC         6
